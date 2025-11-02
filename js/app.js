@@ -1,9 +1,9 @@
-// X-Wallet v1.5.9-root — canonical build (networks, balances, tx history, SafeSend modal, ≥90 hard block)
+// X-Wallet v1.6.1 — canonical build (networks, balances, tx history, SafeSend modal, ≥90 hard block -> "Return to Wallet")
 
 (async function () {
   /* ================= CONFIG ================= */
   const CONFIG = {
-    VERSION: "v1.5.9-root",
+    VERSION: "v1.6.1",
     ALCHEMY_KEY: "kxHg5y9yBXWAb9cOcJsf0", // <-- replace if needed
     SAFE_SEND_ORG: "https://xwalletv1dot2.agedotcom.workers.dev",
     CHAINS: {
@@ -259,6 +259,11 @@
   function refreshOpenView(){ const active = document.querySelector(".sidebar .item.active")?.dataset?.view || "dashboard"; render(active); }
   function selectItem(v){ $$(".sidebar .item").forEach(x=>x.classList.toggle("active", x.dataset.view===v)); render(v); }
 
+  // === NEW: navigate to Wallets view ===
+  async function goToWallets(){
+    selectItem("wallets");
+  }
+
   /* ===== AES vault helpers ===== */
   async function aesEncrypt(password, plaintext){
     const enc=new TextEncoder();
@@ -371,7 +376,7 @@
   function wireRiskModal(){
     $("#riskClose")?.addEventListener("click", closeRiskModal);
     $("#riskCancel")?.addEventListener("click", closeRiskModal);
-    $("#riskProceed")?.addEventListener("click", doProceedAfterRisk);
+    // NOTE: #riskProceed listener is set dynamically per risk outcome via configureRiskModalActions()
   }
   function openRiskModal(){
     const m=$("#riskModal"); if(!m) return;
@@ -400,6 +405,33 @@
     else { w.style.display="none"; w.innerHTML = ""; }
   }
   function setProceedEnabled(en){ const b=$("#riskProceed"); if(b) b.disabled = !en; }
+
+  // === NEW: Primary button behavior/label based on risk ===
+  function configureRiskModalActions({ score, ofacHit }){
+    const proceedBtn = document.getElementById("riskProceed");
+    if(!proceedBtn) return;
+
+    // remove any previous listeners by cloning
+    const newBtn = proceedBtn.cloneNode(true);
+    proceedBtn.parentNode.replaceChild(newBtn, proceedBtn);
+
+    const hardBlock = !!ofacHit || Number(score) >= 90;
+
+    if (hardBlock){
+      newBtn.textContent = "Return to Wallet";
+      newBtn.disabled = false; // enable to allow returning
+      newBtn.addEventListener("click", async () => {
+        closeRiskModal();
+        await goToWallets();
+      }, { once:true });
+    } else {
+      newBtn.textContent = "Complete transaction";
+      newBtn.disabled = false;
+      newBtn.addEventListener("click", async () => {
+        await doProceedAfterRisk(); // existing send flow
+      }, { once:true });
+    }
+  }
 
   async function fetchSafeSend(addr, chainKey){
     const url = `${CONFIG.SAFE_SEND_ORG}/check?address=${encodeURIComponent(addr)}&chain=${encodeURIComponent(chainKey)}&_=${Date.now()}`;
@@ -439,29 +471,32 @@
       setRiskScore(risk.score);
       setRiskFactors(risk.factors);
 
-      if (risk.score >= 90 || risk.blocked) {
+      const hardBlock = risk.blocked || risk.score >= 90;
+
+      if (hardBlock){
         // HARD BLOCK
         showWarning(
           `RiskXLabs is blocking transactions to this address because we have detected an elevated level of risk or
            regulatory action regarding this address.`
         );
-        setProceedEnabled(false);
         $("#sendOut").textContent = `Blocked by policy (score ${risk.score}).`;
+        // Primary becomes "Return to Wallet"
+        configureRiskModalActions({ score: risk.score, ofacHit: true });
       } else if (risk.score >= 70) {
-        // High, allow with acknowledgement (we keep it simple: enable proceed)
+        // High, allow with acknowledgement (UX: primary still "Complete transaction")
         showWarning(`High risk detected. Proceed only if you understand the risks.`);
-        setProceedEnabled(true);
         $("#sendOut").textContent = `Risk score ${risk.score}. High risk — acknowledgement required.`;
+        configureRiskModalActions({ score: risk.score, ofacHit: false });
       } else {
         // Low/medium
         showWarning("");
-        setProceedEnabled(true);
         $("#sendOut").textContent = `Risk score ${risk.score}. You may proceed.`;
+        configureRiskModalActions({ score: risk.score, ofacHit: false });
       }
     }catch(e){
       console.warn(e);
       state.lastRisk = { score: 35, factors: ["Risk check fallback applied"], blocked:false };
-      setRiskScore(35); setRiskFactors(state.lastRisk.factors); showWarning(""); setProceedEnabled(true);
+      setRiskScore(35); setRiskFactors(state.lastRisk.factors); showWarning(""); configureRiskModalActions({ score:35, ofacHit:false });
       $("#sendOut").textContent = "Risk check fallback applied.";
     }
   }
@@ -470,9 +505,9 @@
     const ctx = state.pendingTx;
     if(!ctx){ closeRiskModal(); return; }
 
-    // If we have a hard block, never proceed
+    // If we have a hard block, never proceed (guard)
     if (state.lastRisk && (state.lastRisk.blocked || state.lastRisk.score >= 90)) {
-      return; // button should already be disabled, extra guard
+      return;
     }
 
     closeRiskModal();
