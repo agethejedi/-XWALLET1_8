@@ -983,6 +983,65 @@ body {
   }
 
   .modal-dialog {
-    margin: 40px 10px;
-  }
+    margin: 40px /* --- Gate screen --- */
+
+.wallet-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 40px);
 }
+
+.wallet-gate-card {
+  max-width: 560px;
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.22), transparent 60%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.99));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  padding: 18px 18px 16px;
+}
+
+.wallet-gate-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.wallet-gate-subtitle {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--rx-text-soft);
+}
+
+.wallet-gate-list {
+  border-radius: 12px;
+  border: 1px dashed rgba(75, 85, 99, 0.9);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.wallet-gate-list-title {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.wallet-gate-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.wallet-gate-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* (Keep all the previously provided neon styles: sidebar, hero, panels, wallet list,
+   action menus, modals, etc.) */
+
