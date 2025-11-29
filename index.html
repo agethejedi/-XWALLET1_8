@@ -1,117 +1,264 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>X-Wallet by RiskXLabs — Web v1.5.9</title>
-
-  <!-- CSP: allow esm.sh (modules), Alchemy/Infura (RPC), CoinGecko (optional), and your SafeSend worker -->
-  <meta http-equiv="Content-Security-Policy"
-        content="
-          default-src 'self';
-          script-src 'self' https://esm.sh;
-          connect-src 'self'
-                       https://*.g.alchemy.com
-                       https://*.infura.io
-                       https://api.coingecko.com
-                       https://xwalletv1dot2.agedotcom.workers.dev
-                       https://esm.sh;
-          style-src 'self' 'unsafe-inline';
-          img-src 'self' data:;
-          font-src 'self' data:;
-          base-uri 'self';
-          frame-ancestors 'none';
-        ">
-
-  <link rel="stylesheet" href="css/styles.css?v=1.5.9"/>
+  <meta charset="UTF-8" />
+  <title>X-Wallet | RiskXLabs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Main styles -->
+  <link rel="stylesheet" href="css/rb.styles.css" />
+  <!-- Ethers for wallet create/import – safe to keep even if you already include it elsewhere -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <!-- Top nav / brand -->
-    <div class="nav">
-      <div class="brand"><span class="x">X</span> X-Wallet <span class="small">by RiskXLabs</span></div>
-      <div class="cta flex">
-        <label for="networkSelect" class="small">Network</label>
-        <select id="networkSelect" style="min-width:200px"></select>
-        <button class="btn ghost" id="ctaLearn">Learn more</button>
-        <button class="btn primary" id="ctaApp">Open App</button>
+  <div class="xwallet-shell">
+    <!-- Sidebar -->
+    <aside class="xwallet-sidebar">
+      <div class="rx-logo">
+        <div class="rx-logo-shield">
+          <span class="rx-flask">⚗</span>
+        </div>
+        <div class="rx-logo-text">
+          <span class="rx-brand">Risk<span class="rx-x">X</span>Labs</span>
+          <span class="rx-sub">X-Wallet</span>
+        </div>
       </div>
-    </div>
 
-    <!-- App shell -->
-    <section class="app">
-      <div class="section-title">X-Wallet (Web)</div>
-      <div class="app-grid">
-        <!-- Sidebar -->
-        <div class="card sidebar">
-          <div class="label">Navigation</div>
-          <div class="item active" data-view="dashboard">Control Center</div>
-          <div class="item" data-view="wallets">Wallets</div>
-          <div class="item" data-view="send">Send</div>
-          <div class="item" data-view="settings">Settings</div>
-          <hr class="sep"/>
-          <div class="flex">
-            <div id="lockState" class="badge">Locked</div>
-            <button class="btn" id="btnLock">Lock</button>
-            <button class="btn" id="btnUnlock">Unlock</button>
+      <nav class="sidebar-nav">
+        <button class="nav-item nav-item-active" data-view="dashboard">
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-view="safesend">
+          <span>SafeSend</span>
+        </button>
+        <button class="nav-item" data-view="activity">
+          <span>Activity</span>
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-wallet-actions">
+        <button id="createWalletBtn" class="pill-btn-outline sidebar-cta">
+          Create wallet
+        </button>
+        <button id="importWalletBtn" class="pill-btn-outline sidebar-cta">
+          Import with 12-word seed
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <span class="version-pill" id="xwalletVersion">v1.5.9</span>
+        <span class="status-pill" id="networkStatusPill">RPC: OK</span>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="xwallet-main">
+      <!-- Top bar: network + address -->
+      <header class="xwallet-topbar">
+        <div class="network-select-wrap">
+          <label for="networkSelect">Network</label>
+          <select id="networkSelect">
+            <option value="ethereum-mainnet">Ethereum Mainnet</option>
+            <option value="sepolia">Sepolia Testnet</option>
+            <option value="polygon-pos">Polygon PoS</option>
+            <option value="arbitrum">Arbitrum</option>
+            <option value="polygon-zkevm">Polygon zkEVM</option>
+            <option value="linea">Linea</option>
+            <option value="base">Base</option>
+            <option value="solana">Solana</option>
+            <option value="tron">Tron</option>
+          </select>
+        </div>
+
+        <div class="address-wrap">
+          <div class="address-label">Current wallet</div>
+          <div class="address-row">
+            <span id="walletAddress" class="address-value">No wallet selected</span>
+            <button id="copyAddressBtn" class="icon-btn" title="Copy address">
+              ⧉
+            </button>
+            <button id="switchAccountBtn" class="pill-btn pill-btn-outline">
+              Switch
+            </button>
           </div>
         </div>
+      </header>
 
-        <!-- Main view container -->
-        <div class="card" id="view"><!-- app.js renders here --></div>
-      </div>
-    </section>
-
-    <footer class="small" style="margin-top:18px;color:var(--muted)">© RiskXLabs — X-Wallet Web v1.5.9</footer>
-  </div>
-
-  <!-- Lock modal -->
-  <div class="lock" id="lockModal" aria-hidden="true">
-    <div class="panel">
-      <div class="label">Unlock your wallet</div>
-      <div class="small">Your secret phrase is encrypted locally. Enter your password to unlock.</div>
-      <div style="height:8px"></div>
-      <input id="unlockPassword" type="password" placeholder="Password"/>
-      <div style="height:8px"></div>
-      <div class="flex">
-        <button class="btn" id="doUnlock">Unlock</button>
-        <button class="btn ghost" id="cancelUnlock">Cancel</button>
-      </div>
-      <div class="small" id="unlockMsg"></div>
-    </div>
-  </div>
-
-  <!-- SafeSend Risk Review Modal (always used before send) -->
-  <div id="riskModal" class="modal" aria-hidden="true">
-    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="riskTitle">
-      <div class="modal__header">
-        <div class="label" id="riskTitle">SafeSend risk review</div>
-        <button id="riskClose" class="icon-btn" aria-label="Close">✕</button>
-      </div>
-
-      <!-- Meter -->
-      <div class="risk-meter">
-        <div class="risk-meter__scale">
-          <div id="riskMeterBar" class="risk-meter__bar" style="--score:0"></div>
+      <!-- Hero banner -->
+      <section class="xwallet-hero">
+        <div class="xwallet-hero-text">
+          <h1 class="xwallet-hero-title">
+            Xwallet powered by Risk<span class="rx-x">X</span>Labs
+          </h1>
+          <p class="xwallet-hero-subtitle">
+            Our <span class="safesend-tv">SafeSend</span> technology helps
+            protect everyone from crypto novices to the savviest of traders
+            from fraudsters. Get instant assessment and feedback before
+            pulling the trigger.
+          </p>
         </div>
-        <div class="risk-meter__labels"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
-        <div id="riskScoreText" class="risk-meter__score">Risk score: 0</div>
+      </section>
+
+      <!-- Content grid -->
+      <section class="xwallet-content">
+        <!-- Left: holdings by wallet -->
+        <section class="panel panel-balance">
+          <div class="panel-header">
+            <div>
+              <h2>Total balance</h2>
+              <p id="fiatBalanceLabel" class="panel-subtitle">$0.00</p>
+            </div>
+            <div class="balance-actions">
+              <button id="receiveBtn" class="primary-btn ghost-btn">Receive</button>
+              <button id="sendBtn" class="primary-btn">Send</button>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="wallets-header-row">
+              <h3 class="wallets-title">Holdings by wallet</h3>
+              <span class="wallets-hint">
+                Click <span class="wallets-plus">+</span> to view holdings.
+              </span>
+            </div>
+
+            <div id="walletsContainer" class="wallets-list">
+              <!-- Filled by JS -->
+            </div>
+          </div>
+
+          <div class="panel-footer">
+            <span class="hint-text">
+              Expand a wallet to see each asset’s logo, quantity, USD value, and 24h change.
+              Positive changes appear in green, negative in red.
+            </span>
+          </div>
+        </section>
+
+        <!-- Right: SafeSend / risk -->
+        <section class="panel panel-risk">
+          <div class="panel-header">
+            <h2>SafeSend Risk</h2>
+            <span id="safesendScoreBadge" class="risk-badge risk-badge-neutral">
+              Score: -- / 100
+            </span>
+          </div>
+
+          <div class="panel-body">
+            <div class="risk-summary">
+              <div class="risk-gauge" id="riskGaugeDial">
+                <span id="riskGaugeLabel">--</span>
+              </div>
+              <ul class="risk-highlights" id="riskHighlightsList">
+                <!-- JS list items -->
+              </ul>
+            </div>
+
+            <div class="risk-actions">
+              <label for="recipientInput">Recipient address</label>
+              <div class="recipient-row">
+                <input
+                  id="recipientInput"
+                  type="text"
+                  class="input"
+                  placeholder="Paste address / ENS / Tron tag"
+                />
+                <button id="runSafeSendBtn" class="primary-btn">
+                  Run SafeSend
+                </button>
+              </div>
+
+              <button id="viewFullReportBtn" class="pill-btn pill-btn-outline">
+                View full SafeSend report
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-footer activity-footer">
+            <div class="activity-header">
+              <h3>Recent activity</h3>
+              <button id="viewAllActivityBtn" class="link-btn">View all</button>
+            </div>
+            <div class="activity-list" id="activityList">
+              <!-- recent tx rows via JS -->
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <!-- Create wallet modal -->
+  <div id="createWalletModal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-dialog">
+      <header class="modal-header">
+        <h2>Create new wallet</h2>
+        <button class="icon-btn modal-close" data-close-modal>✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="modal-text">
+          This 12-word phrase is the <strong>only</strong> way to recover this wallet.
+          Store it somewhere safe. We never store it for you.
+        </p>
+        <div class="modal-field">
+          <label>Wallet label</label>
+          <input id="cwLabel" class="input" placeholder="e.g. Primary wallet" />
+        </div>
+        <div class="modal-field">
+          <label>12-word seed phrase</label>
+          <textarea id="cwMnemonic" class="input input-multiline" readonly></textarea>
+        </div>
+        <div class="modal-field">
+          <label>Address</label>
+          <div id="cwAddress" class="address-value address-value-solid"></div>
+        </div>
       </div>
-
-      <!-- Factors -->
-      <div id="riskFactors" class="risk-factors small">No notable factors.</div>
-
-      <!-- High-risk acknowledgement / hard block message area -->
-      <div id="riskWarning" class="risk-warning"><!-- populated by JS --></div>
-
-      <div class="modal__actions">
-        <button id="riskCancel" class="btn ghost">Cancel</button>
-        <button id="riskProceed" class="btn primary" disabled>Complete transaction</button>
-      </div>
+      <footer class="modal-footer">
+        <button class="ghost-btn" data-close-modal>Cancel</button>
+        <button id="cwConfirmBtn" class="primary-btn">I’ve saved the seed</button>
+      </footer>
     </div>
   </div>
 
-  <!-- App script (ESM) -->
-  <script type="module" crossorigin src="js/app.js?v=1.5.9"></script>
+  <!-- Import wallet modal -->
+  <div id="importWalletModal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-dialog">
+      <header class="modal-header">
+        <h2>Import wallet from 12-word seed</h2>
+        <button class="icon-btn modal-close" data-close-modal>✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="modal-text">
+          Paste your 12-word seed phrase below to import an existing wallet.
+          This never leaves your device.
+        </p>
+        <div class="modal-field">
+          <label>Wallet label</label>
+          <input id="iwLabel" class="input" placeholder="e.g. Ledger wallet" />
+        </div>
+        <div class="modal-field">
+          <label>12-word seed phrase</label>
+          <textarea
+            id="iwMnemonic"
+            class="input input-multiline"
+            placeholder="twelve words separated by spaces"
+          ></textarea>
+          <div id="iwError" class="modal-error" hidden></div>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button class="ghost-btn" data-close-modal>Cancel</button>
+        <button id="iwImportBtn" class="primary-btn">Import wallet</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Your existing SafeSend modal / other overlays can stay below -->
+
+  <script src="js/rb.app.js"></script>
 </body>
 </html>
