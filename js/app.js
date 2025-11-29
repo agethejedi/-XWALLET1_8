@@ -1,4 +1,4 @@
-// ===== BASIC SAFETY =====
+// ===== SAFETY: ethers presence =====
 if (typeof ethers === "undefined") {
   alert("Crypto library failed to load. Check the ethers.js <script> tag URL.");
   throw new Error("ethers.js not loaded");
@@ -13,11 +13,6 @@ let wallets = [];
 let currentWalletId = null;
 
 // ===== DOM ELEMENTS =====
-const walletGate = document.getElementById("walletGate");
-const gateWalletList = document.getElementById("gateWalletList");
-const gateCreateBtn = document.getElementById("gateCreateBtn");
-const gateImportBtn = document.getElementById("gateImportBtn");
-
 const walletTopbar = document.getElementById("walletTopbar");
 const walletHero = document.getElementById("walletHero");
 const walletDashboard = document.getElementById("walletDashboard");
@@ -30,9 +25,14 @@ const createWalletBtn = document.getElementById("createWalletBtn");
 const importWalletBtn = document.getElementById("importWalletBtn");
 const walletsNavBtn = document.getElementById("walletsNavBtn");
 
-const createWalletModal = document.getElementById("createWalletModal");
-const importWalletModal = document.getElementById("importWalletModal");
+// Wallet Hub modal (popup)
+const walletHubModal = document.getElementById("walletHubModal");
+const gateWalletList = document.getElementById("gateWalletList");
+const hubCreateBtn = document.getElementById("hubCreateBtn");
+const hubImportBtn = document.getElementById("hubImportBtn");
 
+// Create wallet modal
+const createWalletModal = document.getElementById("createWalletModal");
 const cwMnemonicEl = document.getElementById("cwMnemonic");
 const cwAddressEl = document.getElementById("cwAddress");
 const cwLabelEl = document.getElementById("cwLabel");
@@ -40,8 +40,12 @@ const cwConfirmBtn = document.getElementById("cwConfirmBtn");
 const cwPasswordEl = document.getElementById("cwPassword");
 const cwPasswordErrorEl = document.getElementById("cwPasswordError");
 
+// Import wallet modal
+const importWalletModal = document.getElementById("importWalletModal");
 const iwLabelEl = document.getElementById("iwLabel");
 const iwMnemonicEl = document.getElementById("iwMnemonic");
+const iwPasswordEl = document.getElementById("iwPassword");
+const iwPasswordErrorEl = document.getElementById("iwPasswordError");
 const iwErrorEl = document.getElementById("iwError");
 const iwImportBtn = document.getElementById("iwImportBtn");
 
@@ -70,7 +74,7 @@ function loadWallets() {
     wallets = [];
   }
 
-  // Ensure basic shape
+  // Normalize shape
   wallets.forEach((w) => {
     if (!Array.isArray(w.holdings)) w.holdings = [];
     if (typeof w.password === "undefined") w.password = null;
@@ -100,7 +104,7 @@ function setCurrentWallet(id) {
     sessionStorage.removeItem(SS_CURRENT_ID_KEY);
   }
   refreshHeader();
-  updateGateVisibility();
+  updateAppVisibility();
 }
 
 function refreshHeader() {
@@ -114,8 +118,8 @@ function refreshHeader() {
   fiatBalanceLabelEl.textContent = formatUsd(wallet.totalUsd || 0);
 }
 
-// ===== GATE & DASHBOARD =====
-function updateGateWalletList() {
+// ===== WALLET HUB POPUP =====
+function updateWalletHubList() {
   if (!wallets.length) {
     gateWalletList.hidden = true;
     gateWalletList.innerHTML = "";
@@ -143,20 +147,28 @@ function updateGateWalletList() {
   });
 }
 
-function updateGateVisibility() {
+function showWalletHub() {
+  updateWalletHubList();
+  if (walletHubModal) walletHubModal.removeAttribute("hidden");
+}
+
+function hideWalletHub() {
+  if (walletHubModal) walletHubModal.setAttribute("hidden", "");
+}
+
+function updateAppVisibility() {
   const hasUnlocked = !!currentWalletId;
   if (hasUnlocked) {
-    walletGate.hidden = true;
     walletTopbar.hidden = false;
     walletHero.hidden = false;
     walletDashboard.hidden = false;
+    hideWalletHub();
   } else {
-    walletGate.hidden = false;
     walletTopbar.hidden = true;
     walletHero.hidden = true;
     walletDashboard.hidden = true;
+    showWalletHub();
   }
-  updateGateWalletList();
 }
 
 // ===== RENDER WALLETS & HOLDINGS =====
@@ -362,7 +374,7 @@ function createNewWallet() {
 }
 
 if (createWalletBtn) createWalletBtn.addEventListener("click", createNewWallet);
-if (gateCreateBtn) gateCreateBtn.addEventListener("click", createNewWallet);
+if (hubCreateBtn) hubCreateBtn.addEventListener("click", createNewWallet);
 
 cwConfirmBtn.addEventListener("click", () => {
   const label = cwLabelEl.value.trim() || "New wallet";
@@ -413,24 +425,36 @@ cwConfirmBtn.addEventListener("click", () => {
   setCurrentWallet(id);
 });
 
-// ===== IMPORT / UNLOCK BY SEED =====
+// ===== IMPORT / UNLOCK BY SEED (with optional password) =====
 function openImportModal() {
   iwLabelEl.value = "";
   iwMnemonicEl.value = "";
   iwErrorEl.textContent = "";
   iwErrorEl.setAttribute("hidden", "");
+
+  if (iwPasswordEl) iwPasswordEl.value = "";
+  if (iwPasswordErrorEl) {
+    iwPasswordErrorEl.textContent = "";
+    iwPasswordErrorEl.setAttribute("hidden", "");
+  }
+
   openModal(importWalletModal);
 }
 
 if (importWalletBtn) importWalletBtn.addEventListener("click", openImportModal);
-if (gateImportBtn) gateImportBtn.addEventListener("click", openImportModal);
+if (hubImportBtn) hubImportBtn.addEventListener("click", openImportModal);
 
 iwImportBtn.addEventListener("click", () => {
   const label = iwLabelEl.value.trim() || "Imported wallet";
   const phrase = iwMnemonicEl.value.trim().toLowerCase();
+  const password = iwPasswordEl ? iwPasswordEl.value.trim() : "";
 
   iwErrorEl.textContent = "";
   iwErrorEl.setAttribute("hidden", "");
+  if (iwPasswordErrorEl) {
+    iwPasswordErrorEl.textContent = "";
+    iwPasswordErrorEl.setAttribute("hidden", "");
+  }
 
   if (!phrase) {
     iwErrorEl.textContent = "Seed phrase is required.";
@@ -442,6 +466,22 @@ iwImportBtn.addEventListener("click", () => {
     iwErrorEl.textContent = "Seed phrase must be 12 or 24 words.";
     iwErrorEl.removeAttribute("hidden");
     return;
+  }
+
+  if (password) {
+    const validPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!validPattern.test(password)) {
+      if (iwPasswordErrorEl) {
+        iwPasswordErrorEl.textContent =
+          "Password must be at least 8 characters and include letters and numbers.";
+        iwPasswordErrorEl.removeAttribute("hidden");
+      } else {
+        alert(
+          "Password must be at least 8 characters and include letters and numbers."
+        );
+      }
+      return;
+    }
   }
 
   try {
@@ -461,12 +501,16 @@ iwImportBtn.addEventListener("click", () => {
         id,
         label,
         address: addr,
-        password: null,
+        password: password || null,
         totalUsd: 0,
         change24hPct: 0,
         holdings: []
       };
       wallets.push(existing);
+      saveWallets();
+    } else if (password) {
+      // Optionally update password if provided
+      existing.password = password;
       saveWallets();
     }
 
@@ -481,7 +525,7 @@ iwImportBtn.addEventListener("click", () => {
   }
 });
 
-// ===== UNLOCK BY PASSWORD FROM GATE =====
+// ===== UNLOCK BY PASSWORD FROM HUB LIST =====
 document.addEventListener("click", (e) => {
   const unlockBtn = e.target.closest("[data-gate-unlock]");
   if (!unlockBtn) return;
@@ -492,7 +536,7 @@ document.addEventListener("click", (e) => {
 
   if (!wallet.password) {
     alert(
-      "This wallet does not have a password set. Use 'Import / Unlock with 12-word seed' instead."
+      "This wallet does not have a password set. Use 'Import with 12-word seed' to recover it, then set a password."
     );
     return;
   }
@@ -510,13 +554,10 @@ document.addEventListener("click", (e) => {
   renderWallets();
 });
 
-// ===== WALLET NAV BUTTON =====
+// ===== WALLET NAV BUTTON: relaunch hub popup =====
 if (walletsNavBtn) {
   walletsNavBtn.addEventListener("click", () => {
-    // Always show gate as the wallet management hub
-    walletGate.hidden = false;
-    updateGateWalletList();
-    walletGate.scrollIntoView({ behavior: "smooth", block: "start" });
+    showWalletHub();
   });
 }
 
@@ -530,7 +571,7 @@ if (networkSelect) {
 // ===== INIT =====
 loadWallets();
 
-// Seed demo wallet if none
+// Seed demo wallet if none exist (for visual testing)
 if (!wallets.length) {
   wallets = [
     {
@@ -566,4 +607,4 @@ if (!wallets.length) {
 }
 
 renderWallets();
-updateGateVisibility();
+updateAppVisibility();
