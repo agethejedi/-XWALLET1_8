@@ -514,7 +514,6 @@ walletsContainer.addEventListener("click", (e) => {
     toggle.textContent = "+";
   }
 
-  setCurrentWallet(card.dataset.walletId);
 });
 
 // Action menu + SafeSend trigger
