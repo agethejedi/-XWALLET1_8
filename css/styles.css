@@ -375,7 +375,7 @@ body {
   line-height: 1.5;
 }
 
-/* SafeSend TV lines */
+/* SafeSend TV lines + scan effect */
 
 .safesend-tv {
   position: relative;
@@ -385,33 +385,164 @@ body {
   letter-spacing: 0.12em;
   color: #fde047;
   text-shadow:
-    0 0 8px rgba(250, 204, 21, 0.8),
-    0 0 16px rgba(250, 204, 21, 0.6);
+    0 0 4px rgba(250, 204, 21, 0.8),
+    0 0 10px rgba(250, 204, 21, 0.9),
+    0 0 18px rgba(250, 204, 21, 0.8);
   background-image: repeating-linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.25) 0,
-    rgba(0, 0, 0, 0.25) 1px,
-    transparent 1px,
-    transparent 3px
+    rgba(0, 0, 0, 0.32) 0px,
+    rgba(0, 0, 0, 0.32) 1px,
+    rgba(0, 0, 0, 0.1) 1px,
+    rgba(0, 0, 0, 0.1) 2px,
+    transparent 2px,
+    transparent 4px
   );
   -webkit-background-clip: text;
   background-clip: text;
+  animation: tvFlicker 2.4s steps(2, end) infinite;
 }
 
+/* Moving horizontal scan bar over the text */
+.safesend-tv::before {
+  content: "";
+  position: absolute;
+  left: -6%;
+  right: -6%;
+  top: 0;
+  height: 140%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(250, 250, 210, 0.08) 40%,
+    rgba(250, 250, 210, 0.25) 50%,
+    rgba(250, 250, 210, 0.08) 60%,
+    transparent 100%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.8;
+  transform: translateY(-140%);
+  animation: tvScan 3.2s linear infinite;
+  pointer-events: none;
+}
+
+/* Subtle glow band across letters */
 .safesend-tv::after {
   content: "";
   position: absolute;
-  inset: -1px;
+  inset: -2px;
   border-radius: 4px;
   pointer-events: none;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(250, 204, 21, 0.1),
+    rgba(250, 204, 21, 0.18),
     transparent
   );
   mix-blend-mode: screen;
-  opacity: 0.6;
+  opacity: 0.85;
+}
+
+@keyframes tvFlicker {
+  0% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes tvScan {
+  0% {
+    transform: translateY(-140%);
+  }
+  100% {
+    transform: translateY(80%);
+  }
+}
+
+/* Wrapper so gauge + text feel like a single badge in hero */
+.safesend-hero-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 28px; /* space for gauge on the left */
+}
+
+/* Circular hashed meter behind SafeSend */
+.safesend-gauge {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  background:
+    conic-gradient(
+      from -90deg,
+      #4ade80 0deg,
+      #4ade80 70deg,
+      #fde047 70deg,
+      #fde047 150deg,
+      #f97373 150deg,
+      #f97373 220deg,
+      transparent 220deg,
+      transparent 360deg
+    );
+  box-shadow:
+    0 0 10px rgba(34, 197, 94, 0.4),
+    0 0 16px rgba(250, 204, 21, 0.35),
+    0 0 20px rgba(248, 113, 113, 0.3);
+  overflow: hidden;
+}
+
+/* radial center + hash-like lines */
+.safesend-gauge::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at center, #020617 0, #020617 55%, transparent 56%),
+    repeating-linear-gradient(
+      to right,
+      rgba(15, 23, 42, 0.35) 0px,
+      rgba(15, 23, 42, 0.35) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  opacity: 0.9;
+}
+
+/* subtle animated "sweep" like a radar needle */
+.safesend-gauge::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  border-radius: 999px;
+  background: conic-gradient(
+    from -90deg,
+    rgba(148, 163, 184, 0.05),
+    rgba(148, 163, 184, 0.4),
+    rgba(148, 163, 184, 0.05)
+  );
+  mix-blend-mode: screen;
+  animation: gaugeSweep 4.2s linear infinite;
+  opacity: 0.9;
+}
+
+@keyframes gaugeSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Content grid */
@@ -698,10 +829,6 @@ body {
 
 /* Wallet holdings */
 
-.wallet-holdings {
-  padding: 6px 8px 8px;
-}
-
 .holding-row {
   display: grid;
   grid-template-columns: auto 1.6fr 1fr 1.1fr 0.9fr auto;
@@ -721,6 +848,32 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.13em;
   color: var(--rx-text-soft);
+}
+
+/* Header row: keep headings on one line, aligned with columns */
+.holding-row.holding-row-header span {
+  text-align: right;
+}
+
+.holding-row-header .header-asset {
+  grid-column: 1 / span 2;  /* spans logo + name column */
+  text-align: left;
+}
+
+.holding-row-header .header-amount {
+  grid-column: 3;
+}
+
+.holding-row-header .header-value {
+  grid-column: 4;
+}
+
+.holding-row-header .header-change {
+  grid-column: 5;
+}
+
+.holding-row-header .header-action {
+  grid-column: 6;
 }
 
 .holding-asset-logo img {
