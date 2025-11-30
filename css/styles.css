@@ -1330,3 +1330,12 @@ body {
     min-width: 0;
   }
 }
+
+/* Force brighter wallet text */
+.wallet-name {
+  color: #e5e7eb;
+}
+
+.wallet-balance {
+  color: #e5e7eb;
+}
