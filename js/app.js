@@ -810,6 +810,7 @@ async function fetchRecentTxForAddress(address, uiNetwork) {
   }
 }
 
+// Side-by-side recent transactions: recipient vs sender
 async function loadRecentTransactions(fromAddress, toAddress, uiNetwork) {
   if (!safesendTxList) return;
 
@@ -828,6 +829,7 @@ async function loadRecentTransactions(fromAddress, toAddress, uiNetwork) {
     // Recipient column
     const recipCol = document.createElement("div");
     recipCol.className = "safesend-tx-column";
+
     const recipHeader = document.createElement("div");
     recipHeader.className = "safesend-tx-section-label";
     recipHeader.textContent = "Recipient address";
@@ -856,6 +858,7 @@ async function loadRecentTransactions(fromAddress, toAddress, uiNetwork) {
     // Sender column
     const senderCol = document.createElement("div");
     senderCol.className = "safesend-tx-column";
+
     const senderHeader = document.createElement("div");
     senderHeader.className = "safesend-tx-section-label";
     senderHeader.textContent = "Sender address";
@@ -896,21 +899,6 @@ async function loadRecentTransactions(fromAddress, toAddress, uiNetwork) {
 
     safesendTxList.innerHTML = "";
     safesendTxList.appendChild(wrapper);
-  } catch (err) {
-    console.warn("loadRecentTransactions error", err);
-    safesendTxList.innerHTML =
-      '<div class="hint-text">Unable to load recent transactions right now.</div>';
-  }
-}
-    safesendTxList.innerHTML = "";
-    if (!toTxs.length && !fromTxs.length) {
-      const empty = document.createElement("div");
-      empty.className = "hint-text";
-      empty.textContent = "No recent transactions found for these addresses.";
-      safesendTxList.appendChild(empty);
-    } else {
-      safesendTxList.appendChild(frag);
-    }
   } catch (err) {
     console.warn("loadRecentTransactions error", err);
     safesendTxList.innerHTML =
