@@ -1529,3 +1529,184 @@ body {
 .modal-risk-gauge-wrap .risk-gauge.bad span {
   color: #ff5c7a;
 }
+/* ===== Risk highlights as badges ===== */
+.risk-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+}
+
+.risk-highlights li {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(169, 207, 255, 0.25);
+  background: radial-gradient(circle at top left, #101825, #050910);
+  color: #e0ebff;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ===== Amount row on SendSafe ===== */
+.amount-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0.85rem 0 1.25rem;
+}
+
+.amount-group {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.amount-type {
+  max-width: 180px;
+}
+
+/* ===== Recent tx: side-by-side columns ===== */
+.safesend-tx-list {
+  margin-top: 0.75rem;
+}
+
+.safesend-tx-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.safesend-tx-column {
+  background: linear-gradient(135deg, #0b1321, #050910);
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(140, 196, 255, 0.14);
+}
+
+/* existing .safesend-tx-row can stay as-is, but this keeps it looking tight */
+.safesend-tx-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 0.7fr);
+  column-gap: 0.7rem;
+  align-items: center;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.3rem;
+  border-radius: 0.5rem;
+  background: radial-gradient(circle at top left, #0b1524, #050910);
+  margin-top: 0.25rem;
+}
+
+/* ===== Score badge bands (red → yellow → greens) ===== */
+.risk-badge {
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.risk-badge-critical {
+  background: radial-gradient(circle at top left, #ff3b5e, #7a0820);
+  color: #ffeef2;
+}
+
+.risk-badge-high {
+  background: radial-gradient(circle at top left, #ff9140, #8a2c08);
+  color: #fff4e6;
+}
+
+.risk-badge-medium {
+  background: radial-gradient(circle at top left, #9dff7a, #245b24);
+  color: #021407;
+}
+
+.risk-badge-low {
+  background: radial-gradient(circle at top left, #29bf6b, #0b341a);
+  color: #e6ffef;
+}
+
+.risk-badge-neutral {
+  background: #253044;
+  color: #d7e4ff;
+}
+
+/* History score chips */
+.safesend-history-score.critical {
+  color: #ff5b7a;
+}
+.safesend-history-score.high {
+  color: #ffb347;
+}
+.safesend-history-score.medium {
+  color: #9dff7a;
+}
+.safesend-history-score.low {
+  color: #29bf6b;
+}
+
+/* ===== Gauge styling & animation (Vision-like) ===== */
+.risk-gauge {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, #02060d 45%, transparent 46%),
+    conic-gradient(
+      from 210deg,
+      #ff3b5e 0deg,
+      #ffb347 90deg,
+      #9dff7a 180deg,
+      #29bf6b 240deg,
+      #101622 300deg,
+      #101622 360deg
+    );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(0, 255, 191, 0.15);
+}
+
+.risk-gauge span {
+  position: relative;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+/* Let band class tint the number */
+.risk-gauge.critical span {
+  color: #ff5b7a;
+}
+.risk-gauge.high span {
+  color: #ffb347;
+}
+.risk-gauge.medium span {
+  color: #9dff7a;
+}
+.risk-gauge.low span {
+  color: #29bf6b;
+}
+.risk-gauge.neutral span {
+  color: #c9d6ff;
+}
+
+/* Subtle pulse on score change */
+.risk-gauge-anim {
+  animation: gaugePulse 0.6s ease-out;
+}
+
+@keyframes gaugePulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 rgba(0, 255, 191, 0.0);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(0, 255, 191, 0.35);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(0, 255, 191, 0.15);
+  }
+}
