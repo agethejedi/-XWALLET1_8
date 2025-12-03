@@ -1748,3 +1748,44 @@ body {
   font-weight: 600;
   color: #9dff7a;
 }
+
+.settings-wallet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-wallet-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(8, 18, 40, 0.9);
+  border: 1px solid rgba(96, 165, 250, 0.18);
+}
+
+.settings-wallet-main {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.settings-wallet-main label {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-bottom: 0.25rem;
+}
+
+.settings-wallet-address {
+  flex: 1 1 220px;
+  font-size: 0.78rem;
+  opacity: 0.8;
+  word-break: break-all;
+  padding-top: 0.25rem;
+}
+
+.settings-wallet-save {
+  align-self: center;
+}
