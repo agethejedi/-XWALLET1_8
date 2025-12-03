@@ -1710,3 +1710,41 @@ body {
     box-shadow: 0 0 10px rgba(0, 255, 191, 0.15);
   }
 }
+
+.safesend-tx-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.safesend-tx-column {
+  background: linear-gradient(135deg, #0b1321, #050910);
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(140, 196, 255, 0.14);
+}
+
+.safesend-tx-section-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8fa7d8;
+  margin-bottom: 0.3rem;
+}
+
+.safesend-tx-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr) minmax(0, 0.7fr);
+  column-gap: 0.6rem;
+  align-items: center;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.35rem;
+  border-radius: 0.45rem;
+  background: radial-gradient(circle at top left, #0b1524, #050910);
+  margin-top: 0.25rem;
+}
+
+.safesend-tx-direction {
+  font-weight: 600;
+  color: #9dff7a;
+}
