@@ -147,6 +147,26 @@
             </span>
           </div>
         </section>
+
+        <!-- Market Ticker / Watchlist -->
+        <section class="panel panel-ticker">
+          <div class="panel-header">
+            <div>
+              <h3>Market ticker</h3>
+              <p class="panel-subtitle">
+                Live prices and 24h moves for your selected watchlist assets.
+              </p>
+            </div>
+            <span class="hint-text small">
+              Customize assets in <strong>Settings → Ticker &amp; Watchlist</strong>.
+            </span>
+          </div>
+          <div class="panel-body">
+            <div id="tickerStrip" class="ticker-strip">
+              Loading ticker…
+            </div>
+          </div>
+        </section>
       </section>
 
       <!-- SendSafe dedicated page -->
@@ -278,12 +298,28 @@
             <div>
               <h3>Settings</h3>
               <p class="panel-subtitle">
-                Rename your wallets to keep things organized. Labels will update across Dashboard and SendSafe.
+                Customize your X-Wallet experience, including ticker and watchlist preferences.
               </p>
             </div>
           </div>
-          <div class="panel-body">
-            <div id="settingsWalletList" class="settings-wallet-list"></div>
+
+          <div class="panel-body settings-body">
+            <!-- Ticker / Watchlist settings -->
+            <section class="settings-section">
+              <h4>Ticker &amp; Watchlist</h4>
+              <p class="settings-text">
+                Choose which assets appear in the dashboard market ticker. Prices and
+                24h changes will be refreshed automatically.
+              </p>
+
+              <div id="tickerSettingsContainer" class="ticker-settings-container">
+                <!-- populated by JS -->
+              </div>
+
+              <p class="settings-text small">
+                Changes are saved on this device and will be used the next time you open X-Wallet.
+              </p>
+            </section>
           </div>
         </section>
       </section>
