@@ -39,7 +39,6 @@ function mapNetworkForRiskEngine(uiValue) {
   }
 }
 
-// ===== TICKER / WATCHLIST CONFIG =====
 const AVAILABLE_TICKER_ASSETS = [
   { symbol: "BTC", id: "bitcoin", label: "Bitcoin" },
   { symbol: "ETH", id: "ethereum", label: "Ethereum" },
@@ -49,6 +48,14 @@ const AVAILABLE_TICKER_ASSETS = [
   { symbol: "ARB", id: "arbitrum", label: "Arbitrum" },
   { symbol: "MATIC", id: "matic-network", label: "Polygon (MATIC)" },
   { symbol: "LINK", id: "chainlink", label: "Chainlink" },
+
+  // ✅ New options
+  { symbol: "PYUSD", id: "paypal-usd", label: "PayPal USD (PYUSD)" },
+  { symbol: "LTC", id: "litecoin", label: "Litecoin (LTC)" },
+  { symbol: "CRO", id: "crypto-com-chain", label: "Cronos (CRO)" },
+  { symbol: "TRX", id: "tron", label: "TRON (TRX)" },
+  { symbol: "OP", id: "optimism", label: "Optimism (OP)" },
+  { symbol: "XYO", id: "xyo-network", label: "XYO Network (XYO)" },
 ];
 
 const DEFAULT_TICKER_SYMBOLS = ["BTC", "ETH", "USDT", "SOL"];
