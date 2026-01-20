@@ -20,16 +20,33 @@ function mapNetworkForRiskEngine(uiValue) {
     case "ethereum-mainnet":
     case "sepolia":
       return "eth";
+
+    case "arbitrum-mainnet":
+    case "arbitrum-sepolia":
+      return "arbitrum";
+
+    case "base-mainnet":
+    case "base-sepolia":
+      return "base";
+
+    // Not yet distinct in your risk engine mapping — treat as EVM/ETH for now
+    case "celo-mainnet":
+    case "celo-sepolia":
+    case "moonbeam-mainnet":
+    case "moonbase-alpha":
+    case "worldchain-mainnet":
+    case "worldchain-sepolia":
+    case "iotex-mainnet":
+    case "iotex-testnet":
+      return "eth";
+
     case "polygon-pos":
       return "polygon";
-    case "arbitrum":
-      return "arbitrum";
     case "polygon-zkevm":
       return "polygon-zkevm";
     case "linea":
       return "linea";
-    case "base":
-      return "base";
+
     case "solana":
       return "sol";
     case "tron":
@@ -63,6 +80,136 @@ const DEFAULT_TICKER_SYMBOLS = ["BTC", "ETH", "USDT", "SOL"];
 // Alchemy
 const ALCHEMY_API_KEY = "kxHg5y9yBXWAb9cOcJsf0";
 
+// ===== NETWORKS (EVM RPCs + metadata) =====
+// uiValue must match <option value="..."> in #networkSelect
+const NETWORKS = {
+  // Existing
+  "ethereum-mainnet": {
+    label: "Ethereum Mainnet",
+    chainId: 1,
+    alchemy: "eth-mainnet",
+    explorerBase: "https://etherscan.io",
+    nativeSymbol: "ETH",
+    nativeName: "Ethereum",
+  },
+  sepolia: {
+    label: "Ethereum Sepolia",
+    chainId: 11155111,
+    alchemy: "eth-sepolia",
+    explorerBase: "https://sepolia.etherscan.io",
+    nativeSymbol: "ETH-sep",
+    nativeName: "Ethereum (Sepolia)",
+  },
+
+  // ✅ NEW: Arbitrum
+  "arbitrum-mainnet": {
+    label: "Arbitrum One",
+    chainId: 42161,
+    alchemy: "arb-mainnet",
+    explorerBase: "https://arbiscan.io",
+    nativeSymbol: "ETH",
+    nativeName: "Ethereum (Arbitrum)",
+  },
+  "arbitrum-sepolia": {
+    label: "Arbitrum Sepolia",
+    chainId: 421614,
+    alchemy: "arb-sepolia",
+    explorerBase: "https://sepolia.arbiscan.io",
+    nativeSymbol: "ETH",
+    nativeName: "Ethereum (Arb Sepolia)",
+  },
+
+  // ✅ NEW: Base
+  "base-mainnet": {
+    label: "Base Mainnet",
+    chainId: 8453,
+    alchemy: "base-mainnet",
+    explorerBase: "https://basescan.org",
+    nativeSymbol: "ETH",
+    nativeName: "Ethereum (Base)",
+  },
+  "base-sepolia": {
+    label: "Base Sepolia",
+    chainId: 84532,
+    alchemy: "base-sepolia",
+    explorerBase: "https://sepolia.basescan.org",
+    nativeSymbol: "ETH",
+    nativeName: "Ethereum (Base Sepolia)",
+  },
+
+  // ✅ NEW: Celo
+  "celo-mainnet": {
+    label: "Celo Mainnet",
+    chainId: 42220,
+    alchemy: "celo-mainnet",
+    explorerBase: "https://celoscan.io",
+    nativeSymbol: "CELO",
+    nativeName: "Celo",
+  },
+  "celo-sepolia": {
+    label: "Celo Sepolia",
+    chainId: 11142220,
+    alchemy: "celo-sepolia",
+    explorerBase: "https://sepolia.celoscan.io",
+    nativeSymbol: "CELO",
+    nativeName: "Celo (Sepolia)",
+  },
+
+  // ✅ NEW: Moonbeam
+  "moonbeam-mainnet": {
+    label: "Moonbeam Mainnet",
+    chainId: 1284,
+    alchemy: "moonbeam-mainnet",
+    explorerBase: "https://moonbeam.moonscan.io",
+    nativeSymbol: "GLMR",
+    nativeName: "Glimmer (Moonbeam)",
+  },
+  "moonbase-alpha": {
+    label: "Moonbase Alpha (Testnet)",
+    chainId: 1287,
+    alchemy: "moonbase-alpha",
+    explorerBase: "https://moonbase.moonscan.io",
+    nativeSymbol: "DEV",
+    nativeName: "DEV (Moonbase)",
+  },
+
+  // ✅ NEW: World Chain
+  "worldchain-mainnet": {
+    label: "World Chain Mainnet",
+    chainId: 480,
+    alchemy: "worldchain-mainnet",
+    explorerBase: "https://worldscan.org",
+    nativeSymbol: "ETH",
+    nativeName: "Ethereum (World Chain)",
+  },
+  "worldchain-sepolia": {
+    label: "World Chain Sepolia",
+    chainId: 4801,
+    alchemy: "worldchain-sepolia",
+    explorerBase: "https://sepolia.worldscan.org",
+    nativeSymbol: "ETH",
+    nativeName: "Ethereum (World Sepolia)",
+  },
+
+  // ✅ NEW: IoTeX (NOT Alchemy — use provided RPCs)
+  "iotex-mainnet": {
+    label: "IoTeX Mainnet",
+    chainId: 4689,
+    rpcUrl: "https://babel-api.mainnet.iotex.io",
+    explorerBase: "https://iotexscan.io",
+    nativeSymbol: "IOTX",
+    nativeName: "IoTeX",
+  },
+  "iotex-testnet": {
+    label: "IoTeX Testnet",
+    chainId: 4690,
+    rpcUrl: "https://babel-api.testnet.iotex.io",
+    explorerBase: "https://testnet.iotexscan.io",
+    nativeSymbol: "IOTX",
+    nativeName: "IoTeX (Testnet)",
+  },
+};
+
 // ===== LOGOS (SYMBOL -> URL) =====
 // Use your provided SVG links. We’ll normalize symbols so ETH-sep works too.
 const LOGO_URLS_BY_SYMBOL = {
@@ -82,6 +229,12 @@ const LOGO_URLS_BY_SYMBOL = {
   MATIC: "https://cryptologos.cc/logos/polygon-matic-logo.svg?v=040",
   OP: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.svg?v=040",
   XYO: "https://cryptologos.cc/logos/xyo-xyo-logo.svg?v=040",
+
+  // Native symbols for added networks (nice-to-have; will fallback if missing)
+  CELO: "https://cryptologos.cc/logos/celo-celo-logo.svg?v=040",
+  GLMR: "https://cryptologos.cc/logos/moonbeam-glmr-logo.svg?v=040",
+  IOTX: "https://cryptologos.cc/logos/iotex-iotx-logo.svg?v=040",
+  DEV: "https://via.placeholder.com/32?text=DEV",
 };
 
 function normalizeSymbol(sym) {
@@ -92,7 +245,7 @@ function normalizeSymbol(sym) {
 // Fallback placeholder if we don't know the logo
 function placeholderLogo(symbol) {
   const s = normalizeSymbol(symbol);
-  const ch = (s && s[0]) ? s[0].toUpperCase() : "T";
+  const ch = s && s[0] ? s[0].toUpperCase() : "T";
   return "https://via.placeholder.com/32?text=" + encodeURIComponent(ch);
 }
 
@@ -137,13 +290,18 @@ const ERC20_ABI = [
 ];
 
 function getRpcUrlForNetwork(uiValue) {
-  if (!ALCHEMY_API_KEY) return null;
-  if (uiValue === "ethereum-mainnet") {
-    return `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  const cfg = NETWORKS[uiValue];
+  if (!cfg) return null;
+
+  // Alchemy-backed networks
+  if (cfg.alchemy) {
+    if (!ALCHEMY_API_KEY) return null;
+    return `https://${cfg.alchemy}.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
   }
-  if (uiValue === "sepolia") {
-    return `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  }
+
+  // Direct RPC networks (IoTeX)
+  if (cfg.rpcUrl) return cfg.rpcUrl;
+
   return null;
 }
 
@@ -156,10 +314,7 @@ function getProviderForNetwork(uiValue) {
 // Autoload all ERC-20 token balances for a wallet using Alchemy's extended API
 async function fetchAllErc20Holdings(provider, walletAddress, { maxTokens = 20 } = {}) {
   try {
-    const resp = await provider.send("alchemy_getTokenBalances", [
-      walletAddress,
-      "erc20",
-    ]);
+    const resp = await provider.send("alchemy_getTokenBalances", [walletAddress, "erc20"]);
 
     if (!resp || !Array.isArray(resp.tokenBalances)) return [];
 
@@ -180,8 +335,7 @@ async function fetchAllErc20Holdings(provider, walletAddress, { maxTokens = 20 }
           ]);
 
           const decimals = Number(decimalsRaw) || 18;
-          const override =
-            KNOWN_TOKENS_BY_ADDRESS[tokenAddr.toLowerCase()] || {};
+          const override = KNOWN_TOKENS_BY_ADDRESS[tokenAddr.toLowerCase()] || {};
 
           const finalSymbol = override.symbol || symbolRaw || "TOKEN";
           const finalName = override.name || nameRaw || "Unknown Token";
@@ -190,8 +344,7 @@ async function fetchAllErc20Holdings(provider, walletAddress, { maxTokens = 20 }
           // 1) override.logoUrl (e.g., PYUSD)
           // 2) map by symbol (USDC, USDT, etc.)
           // 3) placeholder
-          const logoUrl =
-            override.logoUrl || getLogoUrlForSymbol(finalSymbol);
+          const logoUrl = override.logoUrl || getLogoUrlForSymbol(finalSymbol);
 
           const rawBal = tb.tokenBalance;
           const amount = Number(ethers.utils.formatUnits(rawBal, decimals));
@@ -371,10 +524,12 @@ function loadWallets() {
         if (!h || !h.symbol) return h;
         const upgraded = getLogoUrlForSymbol(h.symbol);
         // Only overwrite if we have a known logo OR the current one is placeholder-ish
-        const hasKnown = LOGO_URLS_BY_SYMBOL[normalizeSymbol(h.symbol)] ||
+        const hasKnown =
+          LOGO_URLS_BY_SYMBOL[normalizeSymbol(h.symbol)] ||
           (normalizeSymbol(h.symbol).includes("-") &&
             LOGO_URLS_BY_SYMBOL[normalizeSymbol(h.symbol).split("-")[0]]);
-        const isPlaceholder = typeof h.logoUrl === "string" && h.logoUrl.includes("via.placeholder.com");
+        const isPlaceholder =
+          typeof h.logoUrl === "string" && h.logoUrl.includes("via.placeholder.com");
         if (hasKnown || isPlaceholder) {
           return { ...h, logoUrl: upgraded };
         }
@@ -430,12 +585,13 @@ function saveTickerSymbols(symbols) {
   localStorage.setItem(LS_TICKER_ASSETS_KEY, JSON.stringify(tickerSymbols));
 }
 
-// ===== LIVE BALANCES (Alchemy) =====
+// ===== LIVE BALANCES (RPC / Alchemy Indexer where supported) =====
 async function refreshWalletOnChainData() {
   const wallet = getWalletById(currentWalletId);
   if (!wallet || !networkSelect) return;
 
   const uiNet = networkSelect.value || "sepolia";
+  const netCfg = NETWORKS[uiNet] || NETWORKS["sepolia"];
   const provider = getProviderForNetwork(uiNet);
 
   if (networkStatusPill) {
@@ -450,7 +606,7 @@ async function refreshWalletOnChainData() {
     console.warn(
       "No provider for network",
       uiNet,
-      "- did you set ALCHEMY_API_KEY?"
+      "- did you set ALCHEMY_API_KEY (for Alchemy nets) or rpcUrl (for direct RPC nets)?"
     );
     return;
   }
@@ -462,27 +618,34 @@ async function refreshWalletOnChainData() {
   try {
     const holdings = [];
 
-    // 1) Native ETH balance
-    const rawEth = await provider.getBalance(wallet.address);
-    const eth = Number(ethers.utils.formatEther(rawEth));
-    const isSepolia = uiNet === "sepolia";
+    // 1) Native balance (ETH/CELO/GLMR/IOTX etc.)
+    const rawNative = await provider.getBalance(wallet.address);
+    const nativeAmount = Number(ethers.utils.formatEther(rawNative));
 
-    const ethSymbol = isSepolia ? "ETH-sep" : "ETH";
+    const nativeSymbol = netCfg.nativeSymbol || "ETH";
+    const nativeName = netCfg.nativeName || "Native";
 
     holdings.push({
-      symbol: ethSymbol,
-      name: isSepolia ? "Ethereum (Sepolia)" : "Ethereum",
-      logoUrl: getLogoUrlForSymbol(ethSymbol),
-      amount: eth,
-      // For now we treat 1 ETH = 1 "USD unit" in this prototype. Later this can hook into live prices.
-      usdValue: eth,
+      symbol: nativeSymbol,
+      name: nativeName,
+      logoUrl: getLogoUrlForSymbol(nativeSymbol),
+      amount: nativeAmount,
+      // For now we treat 1 unit = 1 "USD unit" in this prototype. Later this can hook into live prices.
+      usdValue: nativeAmount,
       change24hPct: 0,
       tokenAddress: null,
     });
 
-    // 2) All ERC-20s (including PYUSD) via Alchemy
-    const erc20Holdings = await fetchAllErc20Holdings(provider, wallet.address);
-    erc20Holdings.forEach((h) => holdings.push(h));
+    // 2) ERC-20s via Alchemy token indexer (only works on Alchemy-backed networks)
+    const canUseAlchemyIndexer = !!(netCfg && netCfg.alchemy);
+    if (canUseAlchemyIndexer) {
+      const erc20Holdings = await fetchAllErc20Holdings(provider, wallet.address);
+      erc20Holdings.forEach((h) => holdings.push(h));
+    } else {
+      // IoTeX: we can still show native balance, but we cannot enumerate all ERC-20s
+      // without a token indexer API or a user-provided token list.
+      console.log("No Alchemy token indexer for", uiNet, "- showing native only.");
+    }
 
     // Aggregate total "USD" value
     let totalUsd = 0;
@@ -1840,8 +2003,7 @@ function renderTicker(data) {
   strip.className = "ticker-strip-inner";
 
   data.forEach((item) => {
-    const changeClass =
-      item.change > 0 ? "positive" : item.change < 0 ? "negative" : "";
+    const changeClass = item.change > 0 ? "positive" : item.change < 0 ? "negative" : "";
 
     const cell = document.createElement("div");
     cell.className = "ticker-item";
