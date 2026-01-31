@@ -1,13 +1,4 @@
-/* styles.css — COMPLETE DROP-IN (RiskXLabs X-Wallet)
-   Notes:
-   - Consolidated duplicates from your current file
-   - Keeps RiskXLabs aesthetic + all your newer SendSafe/ticker/grid improvements
-   - Fixes minor class mismatch: supports BOTH .amount-row and .safesend-amount-row
-   - Adds Xwallet 1.8 UI support:
-     - ENS reverse display pill (#walletEnsName)
-     - ENS resolution preview row (#recipientResolveRow / #recipientResolvedAddress)
-     - Settings vault actions row (.settings-actions-row)
-*/
+/* styles.css — COMPLETE DROP-IN (RiskXLabs X-Wallet) */
 
 :root {
   --rx-bg: #050814;
@@ -464,24 +455,14 @@ body {
 }
 
 @keyframes tvFlicker {
-  0% {
-    opacity: 0.9;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.9;
-  }
+  0% { opacity: 0.9; }
+  50% { opacity: 1; }
+  100% { opacity: 0.9; }
 }
 
 @keyframes tvScan {
-  0% {
-    transform: translateY(-140%);
-  }
-  100% {
-    transform: translateY(80%);
-  }
+  0% { transform: translateY(-140%); }
+  100% { transform: translateY(80%); }
 }
 
 /* Wrapper so gauge + text feel like a single badge in hero */
@@ -556,12 +537,8 @@ body {
 }
 
 @keyframes gaugeSweep {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Content grid */
@@ -731,39 +708,16 @@ body {
   color: #c9d6ff;
 }
 
-.risk-gauge.critical span {
-  color: #ff5b7a;
-}
-.risk-gauge.high span {
-  color: #ffb347;
-}
-.risk-gauge.medium span {
-  color: #9dff7a;
-}
-.risk-gauge.low span {
-  color: #29bf6b;
-}
-.risk-gauge.neutral span {
-  color: #c9d6ff;
-}
+.risk-gauge.neutral span { color: #c9d6ff; }
 
 .risk-gauge-anim {
   animation: gaugePulse 0.6s ease-out;
 }
 
 @keyframes gaugePulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 rgba(0, 255, 191, 0);
-  }
-  50% {
-    transform: scale(1.03);
-    box-shadow: 0 0 20px rgba(0, 255, 191, 0.35);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 10px rgba(0, 255, 191, 0.15);
-  }
+  0% { transform: scale(0.95); box-shadow: 0 0 0 rgba(0, 255, 191, 0); }
+  50% { transform: scale(1.03); box-shadow: 0 0 20px rgba(0, 255, 191, 0.35); }
+  100% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 255, 191, 0.15); }
 }
 
 .risk-actions {
@@ -774,9 +728,7 @@ body {
   font-size: 12px;
 }
 
-.risk-actions label {
-  color: var(--rx-text-soft);
-}
+.risk-actions label { color: var(--rx-text-soft); }
 
 .recipient-row {
   display: flex;
@@ -794,14 +746,14 @@ body {
   outline: none;
 }
 
-.input::placeholder {
-  color: #6b7280;
-}
+.input::placeholder { color: #6b7280; }
 
 .input-multiline {
   border-radius: 12px;
-  min-height: 70px;
+  min-height: 110px;
   resize: vertical;
+  line-height: 1.35;
+  padding: 10px 12px;
 }
 
 .hint-text {
@@ -830,13 +782,9 @@ body {
   font-size: 12px;
 }
 
-.safesend-select-group label {
-  color: var(--rx-text-soft);
-}
+.safesend-select-group label { color: var(--rx-text-soft); }
 
-.safesend-select {
-  min-width: 200px;
-}
+.safesend-select { min-width: 200px; }
 
 /* Selected balance */
 .safesend-balance-row {
@@ -850,22 +798,16 @@ body {
   border: 1px solid rgba(96, 165, 250, 0.16);
 }
 
-.safesend-balance-label {
-  font-size: 12px;
-  color: var(--rx-text-soft);
-}
+.safesend-balance-label { font-size: 12px; color: var(--rx-text-soft); }
 
 .safesend-balance-values {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 
-.safesend-balance-sep {
-  opacity: 0.65;
-  padding: 0 6px;
-}
+.safesend-balance-sep { opacity: 0.65; padding: 0 6px; }
 
-/* Amount row (support BOTH class names used in HTML/CSS) */
+/* Amount row */
 .amount-row,
 .safesend-amount-row {
   display: flex;
@@ -874,14 +816,8 @@ body {
   margin: 0.85rem 0 1.25rem;
 }
 
-.amount-group {
-  flex: 1 1 140px;
-  min-width: 0;
-}
-
-.amount-type {
-  max-width: 180px;
-}
+.amount-group { flex: 1 1 140px; min-width: 0; }
+.amount-type { max-width: 180px; }
 
 .safesend-main {
   display: grid;
@@ -890,15 +826,8 @@ body {
   align-items: flex-start;
 }
 
-/* SendSafe button CRT text */
-.sendsafe-btn {
-  position: relative;
-  overflow: hidden;
-}
-
-.sendsafe-btn .safesend-tv {
-  display: inline-block;
-}
+.sendsafe-btn { position: relative; overflow: hidden; }
+.sendsafe-btn .safesend-tv { display: inline-block; }
 
 /* SafeSend footer blocks */
 .safesend-footer {
@@ -915,9 +844,7 @@ body {
   border: 1px solid rgba(160, 204, 255, 0.08);
 }
 
-.safesend-history-footer {
-  border-top: 1px solid rgba(30, 64, 175, 0.6);
-}
+.safesend-history-footer { border-top: 1px solid rgba(30, 64, 175, 0.6); }
 
 .safesend-history-header {
   display: flex;
@@ -925,17 +852,9 @@ body {
   justify-content: space-between;
 }
 
-/* Recent tx: side-by-side columns */
-.safesend-tx-list {
-  margin-top: 0.75rem;
-}
-
-.safesend-tx-columns {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  gap: 1rem;
-}
-
+/* Recent tx */
+.safesend-tx-list { margin-top: 0.75rem; }
+.safesend-tx-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 1rem; }
 .safesend-tx-column {
   background: linear-gradient(135deg, #0b1321, #050910);
   border-radius: 0.9rem;
@@ -982,10 +901,7 @@ body {
   opacity: 0.9;
 }
 
-.safesend-tx-amount {
-  text-align: right;
-  font-weight: 500;
-}
+.safesend-tx-amount { text-align: right; font-weight: 500; }
 
 /* SafeSend history list */
 .safesend-history-list {
@@ -1003,15 +919,9 @@ body {
   border-bottom: 1px solid rgba(15, 23, 42, 0.96);
 }
 
-.safesend-history-row:last-child {
-  border-bottom: none;
-}
+.safesend-history-row:last-child { border-bottom: none; }
 
-.safesend-history-main {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
+.safesend-history-main { display: flex; flex-direction: column; gap: 1px; }
 
 .safesend-history-address {
   font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono",
@@ -1019,31 +929,14 @@ body {
   font-size: 11px;
 }
 
-.safesend-history-meta {
-  font-size: 11px;
-  color: var(--rx-text-soft);
-}
+.safesend-history-meta { font-size: 11px; color: var(--rx-text-soft); }
 
-.safesend-history-score {
-  font-variant-numeric: tabular-nums;
-}
+.safesend-history-score { font-variant-numeric: tabular-nums; }
+.safesend-history-score.good { color: var(--rx-good); }
+.safesend-history-score.warn { color: #fde047; }
+.safesend-history-score.bad { color: #f97373; }
 
-.safesend-history-score.good {
-  color: var(--rx-good);
-}
-
-.safesend-history-score.warn {
-  color: #fde047;
-}
-
-.safesend-history-score.bad {
-  color: #f97373;
-}
-
-.safesend-history-alert {
-  font-size: 11px;
-  color: #f97373;
-}
+.safesend-history-alert { font-size: 11px; color: #f97373; }
 
 /* Holdings by wallet */
 
@@ -1055,19 +948,10 @@ body {
   margin-bottom: 6px;
 }
 
-.wallets-title {
-  margin: 0;
-  font-size: 14px;
-}
+.wallets-title { margin: 0; font-size: 14px; }
 
-.wallets-hint {
-  font-size: 11px;
-  color: #e5e7eb;
-}
-
-.wallets-plus {
-  font-weight: 700;
-}
+.wallets-hint { font-size: 11px; color: #e5e7eb; }
+.wallets-plus { font-weight: 700; }
 
 .wallets-list {
   display: flex;
@@ -1103,17 +987,9 @@ body {
   border-radius: 12px 12px 0 0;
 }
 
-.wallet-header-main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.wallet-header-main { display: flex; flex-direction: column; gap: 2px; }
 
-.wallet-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #e5e7eb;
-}
+.wallet-name { font-size: 13px; font-weight: 500; color: #e5e7eb; }
 
 .wallet-address {
   font-size: 11px;
@@ -1129,22 +1005,10 @@ body {
   font-size: 12px;
 }
 
-.wallet-balance {
-  font-weight: 500;
-  color: #e5e7eb;
-}
-
-.wallet-change {
-  font-size: 11px;
-}
-
-.wallet-change.positive {
-  color: var(--rx-good);
-}
-
-.wallet-change.negative {
-  color: #f97373;
-}
+.wallet-balance { font-weight: 500; color: #e5e7eb; }
+.wallet-change { font-size: 11px; }
+.wallet-change.positive { color: var(--rx-good); }
+.wallet-change.negative { color: #f97373; }
 
 .wallet-toggle {
   display: inline-flex;
@@ -1177,9 +1041,7 @@ body {
   font-size: 12px;
 }
 
-.holding-row:last-child {
-  border-bottom: none;
-}
+.holding-row:last-child { border-bottom: none; }
 
 .holding-row-header {
   font-size: 11px;
@@ -1203,20 +1065,9 @@ body {
   display: block;
 }
 
-.holding-asset-name {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.holding-symbol {
-  font-weight: 500;
-}
-
-.holding-name {
-  font-size: 11px;
-  color: var(--rx-text-soft);
-}
+.holding-asset-name { display: flex; flex-direction: column; gap: 1px; }
+.holding-symbol { font-weight: 500; }
+.holding-name { font-size: 11px; color: var(--rx-text-soft); }
 
 .holding-amount,
 .holding-value,
@@ -1225,19 +1076,10 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.holding-change.positive {
-  color: var(--rx-good);
-}
+.holding-change.positive { color: var(--rx-good); }
+.holding-change.negative { color: #f97373; }
 
-.holding-change.negative {
-  color: #f97373;
-}
-
-.header-action {
-  color: #e5e7eb !important;
-  font-weight: 600;
-  text-align: right;
-}
+.header-action { color: #e5e7eb !important; font-weight: 600; text-align: right; }
 
 .holding-action {
   position: relative;
@@ -1282,67 +1124,13 @@ body {
   gap: 4px;
 }
 
-.action-item:hover {
-  background: rgba(31, 41, 55, 0.95);
-}
-
-/* Activity (placeholder styles if you wire the page later) */
-.activity-footer {
-  border-top: 1px solid rgba(30, 64, 175, 0.6);
-}
-
-.activity-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.activity-list {
-  margin-top: 6px;
-  max-height: 110px;
-  overflow: auto;
-}
-
-.activity-row {
-  font-size: 12px;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.96);
-}
-
-.activity-row:last-child {
-  border-bottom: none;
-}
-
-.activity-type {
-  font-weight: 500;
-  margin-right: 6px;
-}
-
-.activity-type.sent {
-  color: #f97373;
-}
-
-.activity-type.received {
-  color: var(--rx-good);
-}
-
-.activity-meta {
-  display: block;
-  color: var(--rx-text-soft);
-  font-size: 11px;
-}
+.action-item:hover { background: rgba(31, 41, 55, 0.95); }
 
 /* Modals */
 
-.modal[hidden] {
-  display: none;
-}
+.modal[hidden] { display: none; }
 
-.modal {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-}
+.modal { position: fixed; inset: 0; z-index: 40; }
 
 .modal-backdrop {
   position: absolute;
@@ -1354,7 +1142,7 @@ body {
 .modal-dialog {
   position: relative;
   margin: 60px auto;
-  max-width: 480px;
+  max-width: 520px;
   border-radius: 16px;
   background: linear-gradient(
     135deg,
@@ -1367,7 +1155,6 @@ body {
 }
 
 /* Enhanced Wallet Hub dialog */
-
 .wallet-hub-dialog {
   max-width: 640px;
   background:
@@ -1379,15 +1166,8 @@ body {
     0 0 40px rgba(34, 211, 238, 0.4);
 }
 
-.wallet-hub-hero {
-  margin-bottom: 8px;
-}
-
-.wallet-hub-hero-title {
-  margin: 0;
-  font-size: 15px;
-  letter-spacing: 0.05em;
-}
+.wallet-hub-hero { margin-bottom: 8px; }
+.wallet-hub-hero-title { margin: 0; font-size: 15px; letter-spacing: 0.05em; }
 
 .modal-header {
   display: flex;
@@ -1397,14 +1177,9 @@ body {
   border-bottom: 1px solid rgba(30, 64, 175, 0.7);
 }
 
-.modal-header h2 {
-  margin: 0;
-  font-size: 15px;
-}
+.modal-header h2 { margin: 0; font-size: 15px; }
 
-.modal-body {
-  padding: 10px 14px 2px;
-}
+.modal-body { padding: 10px 14px 2px; }
 
 .modal-footer {
   padding: 8px 14px 10px;
@@ -1414,10 +1189,7 @@ body {
   border-top: 1px solid rgba(15, 23, 42, 0.96);
 }
 
-.modal-text {
-  font-size: 12px;
-  color: var(--rx-text-soft);
-}
+.modal-text { font-size: 12px; color: var(--rx-text-soft); }
 
 .modal-field {
   margin-top: 10px;
@@ -1427,15 +1199,9 @@ body {
   font-size: 12px;
 }
 
-.modal-field label {
-  color: var(--rx-text-soft);
-}
+.modal-field label { color: var(--rx-text-soft); }
 
-.modal-error {
-  margin-top: 4px;
-  font-size: 11px;
-  color: #fecaca;
-}
+.modal-error { margin-top: 4px; font-size: 11px; color: #fecaca; }
 
 /* Gate-style wallet list inside hub */
 
@@ -1447,10 +1213,7 @@ body {
   font-size: 12px;
 }
 
-.wallet-gate-list-title {
-  font-weight: 500;
-  margin-bottom: 4px;
-}
+.wallet-gate-list-title { font-weight: 500; margin-bottom: 4px; }
 
 .wallet-gate-list-item {
   display: flex;
@@ -1467,20 +1230,11 @@ body {
 }
 
 /* SendSafe result modal */
-.safesend-result-dialog {
-  max-width: 540px;
-}
+.safesend-result-dialog { max-width: 540px; }
 
-.modal-risk-gauge-wrap {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
+.modal-risk-gauge-wrap { display: flex; justify-content: center; margin-bottom: 1rem; }
 
-.modal-risk-gauge-wrap .risk-gauge {
-  width: 120px;
-  height: 120px;
-}
+.modal-risk-gauge-wrap .risk-gauge { width: 120px; height: 120px; }
 
 .modal-checkbox-row {
   display: flex;
@@ -1491,26 +1245,14 @@ body {
   line-height: 1.3;
 }
 
-.modal-checkbox-row input[type="checkbox"] {
-  margin-top: 0.18rem;
-}
+.modal-checkbox-row input[type="checkbox"] { margin-top: 0.18rem; }
 
-.modal-risk-gauge-wrap .risk-gauge.good span {
-  color: #52ffb8;
-}
-
-.modal-risk-gauge-wrap .risk-gauge.warn span {
-  color: #ffd35a;
-}
-
-.modal-risk-gauge-wrap .risk-gauge.bad span {
-  color: #ff5c7a;
-}
+.modal-risk-gauge-wrap .risk-gauge.good span { color: #52ffb8; }
+.modal-risk-gauge-wrap .risk-gauge.warn span { color: #ffd35a; }
+.modal-risk-gauge-wrap .risk-gauge.bad span { color: #ff5c7a; }
 
 /* Ticker strip */
-.panel-ticker {
-  margin-top: 1.5rem;
-}
+.panel-ticker { margin-top: 1.5rem; }
 
 .ticker-strip {
   position: relative;
@@ -1533,41 +1275,39 @@ body {
   font-size: 0.9rem;
 }
 
-.ticker-symbol {
-  font-weight: 600;
-}
-
-.ticker-price {
-  opacity: 0.9;
-}
-
-.ticker-change.positive {
-  color: #38c172;
-}
-
-.ticker-change.negative {
-  color: #e3342f;
-}
+.ticker-symbol { font-weight: 600; }
+.ticker-price { opacity: 0.9; }
+.ticker-change.positive { color: #38c172; }
+.ticker-change.negative { color: #e3342f; }
 
 @keyframes ticker-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
-/* Settings: wallet labels & ticker */
-.settings-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
+/* Settings */
+.settings-body { display: flex; flex-direction: column; gap: 2rem; }
 
 .settings-section {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 1rem;
+}
+
+.settings-text {
+  font-size: 12px;
+  color: var(--rx-text-soft);
+  margin: 0.35rem 0 0.75rem;
+  line-height: 1.45;
+}
+
+.settings-text.small { font-size: 11px; opacity: 0.9; }
+
+.settings-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 8px;
 }
 
 .wallet-settings-list,
@@ -1599,11 +1339,9 @@ body {
   font-size: 0.9rem;
 }
 
-.ticker-asset-option input[type="checkbox"] {
-  accent-color: #00e6ff;
-}
+.ticker-asset-option input[type="checkbox"] { accent-color: #00e6ff; }
 
-/* Hide helpers (keep your forced hidden behavior) */
+/* Hide helpers */
 .xwallet-content[hidden],
 .modal[hidden],
 #walletHero[hidden],
@@ -1611,81 +1349,16 @@ body {
   display: none !important;
 }
 
-/* Dashboard layout: stack panels vertically (holdings, then ticker) */
+/* Dashboard layout: stack panels vertically */
 #walletDashboard {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* =========================
-   XWALLET 1.8 ADDITIONS
-   ENS + Portable Vault UI
-   ========================= */
-
-/* Reverse ENS name under the current wallet address (topbar) */
-#walletEnsName {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-end;
-  padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(34, 211, 238, 0.35);
-  background: radial-gradient(
-    circle at top left,
-    rgba(34, 211, 238, 0.16),
-    rgba(2, 6, 23, 0.92)
-  );
-  color: rgba(165, 243, 252, 0.95);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ENS resolution preview under recipient input */
-#recipientResolveRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 6px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: rgba(8, 18, 40, 0.55);
-}
-
-/* Make resolved address read like a “mono pill” */
-#recipientResolvedAddress {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-  font-size: 11px;
-}
-
-/* Settings row for Export/Import vault buttons */
-.settings-actions-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-  align-items: center;
-}
-
-/* Slightly more padding for vault buttons (matches settings rhythm) */
-.settings-actions-row .pill-btn-outline {
-  padding: 7px 14px;
-}
-
 /* Responsive */
-
 @media (max-width: 900px) {
-  .xwallet-shell {
-    grid-template-columns: 1fr;
-  }
+  .xwallet-shell { grid-template-columns: 1fr; }
 
   .xwallet-sidebar {
     flex-direction: row;
@@ -1696,32 +1369,16 @@ body {
     border-bottom: 1px solid rgba(15, 23, 42, 0.9);
   }
 
-  .sidebar-nav {
-    flex-direction: row;
-  }
+  .sidebar-nav { flex-direction: row; }
+  .sidebar-wallet-actions { display: none; }
 
-  .sidebar-wallet-actions {
-    display: none;
-  }
-
-  .xwallet-main {
-    padding: 10px 10px 16px;
-  }
+  .xwallet-main { padding: 10px 10px 16px; }
 
   .xwallet-content,
-  .xwallet-content-single {
-    grid-template-columns: 1fr;
-  }
+  .xwallet-content-single { grid-template-columns: 1fr; }
 
-  .wallet-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .wallet-header-meta {
-    width: 100%;
-    justify-content: space-between;
-  }
+  .wallet-header { flex-direction: column; align-items: flex-start; }
+  .wallet-header-meta { width: 100%; justify-content: space-between; }
 
   .holding-row,
   .holding-row-header {
@@ -1730,50 +1387,12 @@ body {
     row-gap: 3px;
   }
 
-  .holding-amount {
-    grid-column: 3 / 4;
-  }
+  .holding-amount { grid-column: 3 / 4; }
+  .holding-value { grid-column: 4 / 5; }
+  .holding-change { grid-column: 3 / 4; grid-row: 2 / 3; }
+  .holding-action { grid-column: 4 / 5; grid-row: 2 / 3; }
 
-  .holding-value {
-    grid-column: 4 / 5;
-  }
-
-  .holding-change {
-    grid-column: 3 / 4;
-    grid-row: 2 / 3;
-  }
-
-  .holding-action {
-    grid-column: 4 / 5;
-    grid-row: 2 / 3;
-  }
-
-  .modal-dialog {
-    margin: 40px 10px;
-  }
-
-  .safesend-main {
-    grid-template-columns: 1fr;
-  }
-
-  .safesend-select {
-    min-width: 0;
-  }
-
-  /* 1.8: topbar ENS pill wraps safely */
-  .address-wrap {
-    align-items: flex-start;
-  }
-
-  #walletEnsName {
-    align-self: flex-start;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  #recipientResolveRow {
-    flex-wrap: wrap;
-  }
+  .modal-dialog { margin: 40px 10px; }
+  .safesend-main { grid-template-columns: 1fr; }
+  .safesend-select { min-width: 0; }
 }
