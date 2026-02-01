@@ -1,4 +1,4 @@
-/ app.js — X-Wallet + SendSafe + Alchemy (multi-EVM networks) + Seed Vault (1.8) + ENS resolution (public naming)
+// app.js — X-Wallet + SendSafe + Alchemy (multi-EVM networks) + Seed Vault (1.8) + ENS resolution (public naming)
 // ✅ Updates in this drop-in:
 // 1) Native ETH send (ethereum-mainnet + sepolia)
 // 2) SendSafe-gated signing
