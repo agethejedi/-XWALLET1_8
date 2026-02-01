@@ -1,5 +1,9 @@
-// app.js — X-Wallet + SendSafe + Alchemy (multi-EVM networks) + Seed Vault (1.8) + ENS resolution (public naming)
-// ✅ Completed: 60s auto-refresh balances + portable token discovery catalog (export/import)
+/ app.js — X-Wallet + SendSafe + Alchemy (multi-EVM networks) + Seed Vault (1.8) + ENS resolution (public naming)
+// ✅ Updates in this drop-in:
+// 1) Native ETH send (ethereum-mainnet + sepolia)
+// 2) SendSafe-gated signing
+// 3) Transaction preview + confirm (incl. gas estimate)
+// 4) Hard deny / warn enforcement (deny >= 90, warn 60-89 w/ ack)
 
 if (typeof ethers === "undefined") {
   alert("Crypto library failed to load. Check the ethers.js <script> tag URL.");
@@ -11,9 +15,6 @@ const LS_WALLETS_KEY = "xwallet_wallets_v1";
 const SS_CURRENT_ID_KEY = "xwallet_current_wallet_id_v1";
 const LS_SAFESEND_HISTORY_KEY = "xwallet_safesend_history_v1";
 const LS_TICKER_ASSETS_KEY = "xwallet_ticker_assets_v1";
-
-// ✅ NEW: Portable token discovery catalog (included in vault export/import)
-const LS_TOKEN_CATALOG_KEY = "xwallet_token_catalog_v1";
 
 // Risk engine (shared with Vision)
 const RISK_ENGINE_BASE_URL =
@@ -97,7 +98,7 @@ function normalizeSymbol(sym) {
 
 function placeholderLogo(symbol) {
   const s = normalizeSymbol(symbol);
-  const ch = (s && s[0]) ? s[0].toUpperCase() : "T";
+  const ch = s && s[0] ? s[0].toUpperCase() : "T";
   return "https://via.placeholder.com/32?text=" + encodeURIComponent(ch);
 }
 
@@ -118,14 +119,12 @@ const KNOWN_TOKENS_BY_ADDRESS = {
     symbol: "PYUSD",
     name: "PayPal USD",
     logoUrl: getLogoUrlForSymbol("PYUSD"),
-    decimals: 6,
   },
   // PYUSD Sepolia
   "0xcac5ca27d96c219bdcdc823940b66ebd4ff4c7f1": {
     symbol: "PYUSD-sep",
     name: "PYUSD (Sepolia)",
     logoUrl: getLogoUrlForSymbol("PYUSD-sep"),
-    decimals: 6,
   },
 };
 
@@ -138,6 +137,9 @@ const ERC20_ABI = [
 ];
 
 // ====== NETWORKS (1.7/1.8) ======
+// Note: ethers+EVM networks use JsonRpcProvider.
+// Solana is NOT EVM; we will not attempt native balance with ethers here.
+
 function getRpcUrlForNetwork(uiValue) {
   if (uiValue === "iotex-mainnet") return "https://babel-api.mainnet.iotex.io";
   if (uiValue === "iotex-testnet") return "https://babel-api.testnet.iotex.io";
@@ -145,18 +147,30 @@ function getRpcUrlForNetwork(uiValue) {
   if (!ALCHEMY_API_KEY) return null;
 
   // Alchemy EVM
-  if (uiValue === "ethereum-mainnet") return `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "sepolia") return `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "arbitrum") return `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "arbitrum-sepolia") return `https://arb-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "base") return `https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "base-sepolia") return `https://base-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "celo") return `https://celo-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "celo-alfajores") return `https://celo-alfajores.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "moonbeam") return `https://moonbeam-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "moonbeam-alpha") return `https://moonbeam-alpha.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "worldchain") return `https://worldchain-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
-  if (uiValue === "worldchain-sepolia") return `https://worldchain-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "ethereum-mainnet")
+    return `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "sepolia")
+    return `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "arbitrum")
+    return `https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "arbitrum-sepolia")
+    return `https://arb-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "base")
+    return `https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "base-sepolia")
+    return `https://base-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "celo")
+    return `https://celo-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "celo-alfajores")
+    return `https://celo-alfajores.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "moonbeam")
+    return `https://moonbeam-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "moonbeam-alpha")
+    return `https://moonbeam-alpha.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "worldchain")
+    return `https://worldchain-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+  if (uiValue === "worldchain-sepolia")
+    return `https://worldchain-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
 
   return null;
 }
@@ -165,11 +179,15 @@ function getProviderForNetwork(uiValue) {
   const url = getRpcUrlForNetwork(uiValue);
   if (!url) return null;
 
+  // Explicit chainId helps on some RPCs
   const staticNet = (() => {
     switch (uiValue) {
-      case "iotex-mainnet": return { name: "iotex", chainId: 4689 };
-      case "iotex-testnet": return { name: "iotex-testnet", chainId: 4690 };
-      default: return null;
+      case "iotex-mainnet":
+        return { name: "iotex", chainId: 4689 };
+      case "iotex-testnet":
+        return { name: "iotex-testnet", chainId: 4690 };
+      default:
+        return null;
     }
   })();
 
@@ -224,7 +242,9 @@ async function deriveAesKeyFromPassword(password, saltBytes, iterations) {
 
 async function encryptMnemonicToVault(mnemonic, password) {
   if (!password || password.length < 8) {
-    throw new Error("Password required (min 8 chars) to encrypt seed for portability.");
+    throw new Error(
+      "Password required (min 8 chars) to encrypt seed for portability."
+    );
   }
 
   const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -272,9 +292,13 @@ async function decryptMnemonicFromVault(vault, password) {
   return dec.decode(plainBuf);
 }
 
+// Standard EVM derivation path
 const DEFAULT_EVM_DERIVATION_PATH = "m/44'/60'/0'/0/0";
 
-function deriveEvmAddressFromMnemonic(mnemonic, path = DEFAULT_EVM_DERIVATION_PATH) {
+function deriveEvmAddressFromMnemonic(
+  mnemonic,
+  path = DEFAULT_EVM_DERIVATION_PATH
+) {
   const hd = ethers.utils.HDNode.fromMnemonic(mnemonic.trim());
   const child = hd.derivePath(path);
   const w = new ethers.Wallet(child.privateKey);
@@ -289,6 +313,7 @@ function isEnsName(s) {
 }
 
 function getEnsResolutionProvider(uiNetwork) {
+  // ENS is anchored to Ethereum mainnet; Sepolia has test ENS.
   if (uiNetwork === "sepolia") return getProviderForNetwork("sepolia");
   return getProviderForNetwork("ethereum-mainnet");
 }
@@ -296,17 +321,40 @@ function getEnsResolutionProvider(uiNetwork) {
 async function resolveRecipientToAddress(input, uiNetwork) {
   const raw = String(input || "").trim();
 
+  // Address case
   if (raw.toLowerCase().startsWith("0x")) {
-    if (!ethers.utils.isAddress(raw)) return { type: "invalid", input: raw, address: null };
-    return { type: "address", input: raw, address: ethers.utils.getAddress(raw) };
+    if (!ethers.utils.isAddress(raw))
+      return { type: "invalid", input: raw, address: null };
+    return {
+      type: "address",
+      input: raw,
+      address: ethers.utils.getAddress(raw),
+    };
   }
 
+  // ENS case
   if (isEnsName(raw)) {
     const ensProvider = getEnsResolutionProvider(uiNetwork);
-    if (!ensProvider) return { type: "ens", input: raw, address: null, error: "No ENS-capable provider configured." };
+    if (!ensProvider)
+      return {
+        type: "ens",
+        input: raw,
+        address: null,
+        error: "No ENS-capable provider configured.",
+      };
     const addr = await ensProvider.resolveName(raw);
-    if (!addr) return { type: "ens", input: raw, address: null, error: "ENS name did not resolve." };
-    return { type: "ens", input: raw, address: ethers.utils.getAddress(addr) };
+    if (!addr)
+      return {
+        type: "ens",
+        input: raw,
+        address: null,
+        error: "ENS name did not resolve.",
+      };
+    return {
+      type: "ens",
+      input: raw,
+      address: ethers.utils.getAddress(addr),
+    };
   }
 
   return { type: "invalid", input: raw, address: null };
@@ -324,45 +372,8 @@ async function reverseLookupEnsName(address, uiNetwork) {
   }
 }
 
-// ===== ✅ TOKEN CATALOG (portable discovery) =====
-let tokenCatalog = {
-  // schema:
-  // [uiNetwork]: { [tokenAddressLower]: { symbol, name, decimals, logoUrl, discoveredAt } }
-};
-
-function loadTokenCatalog() {
-  try {
-    const raw = localStorage.getItem(LS_TOKEN_CATALOG_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (parsed && typeof parsed === "object") tokenCatalog = parsed;
-  } catch {
-    tokenCatalog = {};
-  }
-}
-function saveTokenCatalog() {
-  try {
-    localStorage.setItem(LS_TOKEN_CATALOG_KEY, JSON.stringify(tokenCatalog));
-  } catch {}
-}
-function getCatalogEntry(uiNetwork, tokenAddressLower) {
-  if (!uiNetwork || !tokenAddressLower) return null;
-  const net = tokenCatalog[uiNetwork];
-  if (!net) return null;
-  return net[tokenAddressLower] || null;
-}
-function upsertCatalogEntry(uiNetwork, tokenAddressLower, entry) {
-  if (!uiNetwork || !tokenAddressLower || !entry) return;
-  if (!tokenCatalog[uiNetwork]) tokenCatalog[uiNetwork] = {};
-  tokenCatalog[uiNetwork][tokenAddressLower] = {
-    ...(tokenCatalog[uiNetwork][tokenAddressLower] || {}),
-    ...entry,
-    discoveredAt: tokenCatalog[uiNetwork][tokenAddressLower]?.discoveredAt || Date.now(),
-  };
-  saveTokenCatalog();
-}
-
 // ===== AUTLOAD ERC-20 via Alchemy (where available) =====
-async function fetchAllErc20Holdings(provider, walletAddress, uiNetwork, { maxTokens = 20 } = {}) {
+async function fetchAllErc20Holdings(provider, walletAddress, { maxTokens = 20 } = {}) {
   try {
     const resp = await provider.send("alchemy_getTokenBalances", [
       walletAddress,
@@ -378,57 +389,22 @@ async function fetchAllErc20Holdings(provider, walletAddress, uiNetwork, { maxTo
     const holdings = await Promise.all(
       nonZero.map(async (tb) => {
         const tokenAddr = tb.contractAddress;
-        const tokenAddrLower = String(tokenAddr || "").toLowerCase();
         try {
           const contract = new ethers.Contract(tokenAddr, ERC20_ABI, provider);
 
-          // ✅ Prefer known token overrides, then catalog, then on-chain calls
-          const known = KNOWN_TOKENS_BY_ADDRESS[tokenAddrLower] || null;
-          const cached = getCatalogEntry(uiNetwork, tokenAddrLower);
-
-          const decimalsPromise =
-            known?.decimals != null
-              ? Promise.resolve(known.decimals)
-              : cached?.decimals != null
-              ? Promise.resolve(cached.decimals)
-              : contract.decimals().catch(() => 18);
-
-          const symbolPromise =
-            known?.symbol
-              ? Promise.resolve(known.symbol)
-              : cached?.symbol
-              ? Promise.resolve(cached.symbol)
-              : contract.symbol().catch(() => "TOKEN");
-
-          const namePromise =
-            known?.name
-              ? Promise.resolve(known.name)
-              : cached?.name
-              ? Promise.resolve(cached.name)
-              : contract.name().catch(() => "Unknown Token");
-
           const [decimalsRaw, symbolRaw, nameRaw] = await Promise.all([
-            decimalsPromise,
-            symbolPromise,
-            namePromise,
+            contract.decimals().catch(() => 18),
+            contract.symbol().catch(() => "TOKEN"),
+            contract.name().catch(() => "Unknown Token"),
           ]);
 
           const decimals = Number(decimalsRaw) || 18;
-          const finalSymbol = String(symbolRaw || "TOKEN");
-          const finalName = String(nameRaw || "Unknown Token");
+          const override = KNOWN_TOKENS_BY_ADDRESS[tokenAddr.toLowerCase()] || {};
 
-          const logoUrl =
-            known?.logoUrl ||
-            cached?.logoUrl ||
-            getLogoUrlForSymbol(finalSymbol);
+          const finalSymbol = override.symbol || symbolRaw || "TOKEN";
+          const finalName = override.name || nameRaw || "Unknown Token";
 
-          // ✅ Save to catalog so other devices can inherit after export/import
-          upsertCatalogEntry(uiNetwork, tokenAddrLower, {
-            symbol: finalSymbol,
-            name: finalName,
-            decimals,
-            logoUrl,
-          });
+          const logoUrl = override.logoUrl || getLogoUrlForSymbol(finalSymbol);
 
           const rawBal = tb.tokenBalance;
           const amount = Number(ethers.utils.formatUnits(rawBal, decimals));
@@ -437,7 +413,7 @@ async function fetchAllErc20Holdings(provider, walletAddress, uiNetwork, { maxTo
             symbol: finalSymbol,
             name: finalName,
             logoUrl,
-            usdValue: amount, // prototype: treat as USD for now
+            usdValue: amount,
             amount,
             change24hPct: 0,
             tokenAddress: tokenAddr,
@@ -464,12 +440,59 @@ let safesendHistory = [];
 let tickerSymbols = [];
 let tickerRefreshTimer = null;
 
-// ✅ NEW: wallet balance auto refresh timer (60s)
-let walletRefreshTimer = null;
-let isRefreshingWallet = false;
-
-// Session-only unlock state
+// Session-only unlock state (we do NOT persist decrypted seed)
 const sessionUnlockedWallets = new Set(); // walletId
+
+// ===== SEND EXECUTION STATE (Beta Native ETH Send) =====
+let lastSendSafeDecision = null; // set after SendSafe run; consumed by execute
+
+function isSupportedNativeSendNetwork(uiNet) {
+  return uiNet === "ethereum-mainnet" || uiNet === "sepolia";
+}
+
+function isNativeEthHolding(h) {
+  // native row uses tokenAddress:null and symbol ETH or ETH-sep
+  return (
+    !!h &&
+    !h.tokenAddress &&
+    typeof h.symbol === "string" &&
+    h.symbol.toUpperCase().startsWith("ETH")
+  );
+}
+
+function getExplorerTxBase(uiNet) {
+  if (uiNet === "ethereum-mainnet") return "https://etherscan.io/tx/";
+  if (uiNet === "sepolia") return "https://sepolia.etherscan.io/tx/";
+  return null;
+}
+
+function setRunButtonLabel(text) {
+  if (!runSafeSendBtn) return;
+  const labelSpan = runSafeSendBtn.querySelector(".safesend-tv");
+  if (labelSpan) labelSpan.textContent = text;
+}
+
+async function estimateNativeTxCost(provider, { from, to, valueWei }) {
+  const txReq = { from, to, value: valueWei };
+
+  const gasLimit = await provider.estimateGas(txReq);
+  const feeData = await provider.getFeeData();
+
+  const perGas =
+    feeData.maxFeePerGas && !feeData.maxFeePerGas.isZero()
+      ? feeData.maxFeePerGas
+      : feeData.gasPrice;
+
+  const estFeeWei = perGas ? gasLimit.mul(perGas) : null;
+  const estTotalWei = estFeeWei ? valueWei.add(estFeeWei) : null;
+
+  return { gasLimit, feeData, estFeeWei, estTotalWei };
+}
+
+function formatEth(ethNum) {
+  if (ethNum === null || ethNum === undefined || Number.isNaN(ethNum)) return "--";
+  return `${ethNum.toLocaleString(undefined, { maximumFractionDigits: 8 })} ETH`;
+}
 
 // ===== DOM =====
 const walletTopbar = document.getElementById("walletTopbar");
@@ -479,7 +502,7 @@ const safesendPage = document.getElementById("safesendPage");
 const settingsPage = document.getElementById("settingsPage");
 
 const walletAddressEl = document.getElementById("walletAddress");
-const walletEnsNameEl = document.getElementById("walletEnsName"); // optional
+const walletEnsNameEl = document.getElementById("walletEnsName"); // (NEW, optional)
 const fiatBalanceLabelEl = document.getElementById("fiatBalanceLabel");
 const walletsContainer = document.getElementById("walletsContainer");
 
@@ -542,7 +565,7 @@ const safesendHistoryList = document.getElementById("safesendHistoryList");
 const viewFullReportBtn = document.getElementById("viewFullReportBtn");
 const safesendTxList = document.getElementById("safesendTxList");
 
-// Recipient resolution UI (ENS)
+// (NEW) Recipient resolution UI (ENS)
 const recipientResolveRow = document.getElementById("recipientResolveRow");
 const recipientResolvedAddress = document.getElementById("recipientResolvedAddress");
 
@@ -567,7 +590,7 @@ const tickerStrip = document.getElementById("tickerStrip");
 const tickerSettingsContainer = document.getElementById("tickerSettingsContainer");
 const walletSettingsList = document.getElementById("walletSettingsList");
 
-// Vault export/import controls (Settings)
+// (NEW) Vault export/import controls (Settings)
 const exportVaultBtn = document.getElementById("exportVaultBtn");
 const importVaultFile = document.getElementById("importVaultFile");
 const importVaultBtn = document.getElementById("importVaultBtn");
@@ -604,11 +627,17 @@ function formatTxTime(ms) {
   });
 }
 
+function isLegacyWallet(w) {
+  // Legacy if it lacks encrypted vault data.
+  return !w || !w.vault;
+}
+
 function hasPortableVault(w) {
   return !!(w && w.vault && w.vault.cipherB64 && w.vault.saltB64 && w.vault.ivB64);
 }
 
 function validatePasswordPattern(pw) {
+  // Keep your existing rule: 8+, letters+numbers
   const validPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
   return validPattern.test(pw);
 }
@@ -626,6 +655,16 @@ function setRecipientResolutionUI({ type, input, address, error }) {
   recipientResolvedAddress.textContent = "";
 }
 
+function getSendAmountEthFromUI() {
+  if (!ssSendAmountEl) return null;
+  const raw = String(ssSendAmountEl.value || "").trim();
+  if (!raw) return null;
+  const normalized = raw.replace(/,/g, "");
+  const n = Number(normalized);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
+
 // ===== LOAD / SAVE =====
 function loadWallets() {
   try {
@@ -638,6 +677,23 @@ function loadWallets() {
   wallets.forEach((w) => {
     if (!Array.isArray(w.holdings)) w.holdings = [];
 
+    // Upgrade logo URLs opportunistically
+    if (Array.isArray(w.holdings)) {
+      w.holdings = w.holdings.map((h) => {
+        if (!h || !h.symbol) return h;
+        const upgraded = getLogoUrlForSymbol(h.symbol);
+        const hasKnown =
+          LOGO_URLS_BY_SYMBOL[normalizeSymbol(h.symbol)] ||
+          (normalizeSymbol(h.symbol).includes("-") &&
+            LOGO_URLS_BY_SYMBOL[normalizeSymbol(h.symbol).split("-")[0]]);
+        const isPlaceholder =
+          typeof h.logoUrl === "string" && h.logoUrl.includes("via.placeholder.com");
+        if (hasKnown || isPlaceholder) return { ...h, logoUrl: upgraded };
+        return h;
+      });
+    }
+
+    // Ensure hd metadata exists for portable wallets
     if (w.vault && !w.hd) {
       w.hd = { path: DEFAULT_EVM_DERIVATION_PATH, accountIndex: 0 };
     }
@@ -688,14 +744,10 @@ function saveTickerSymbols(symbols) {
   localStorage.setItem(LS_TICKER_ASSETS_KEY, JSON.stringify(tickerSymbols));
 }
 
-// ===== ✅ LIVE BALANCES (with overlap protection) =====
+// ===== LIVE BALANCES =====
 async function refreshWalletOnChainData() {
   const wallet = getWalletById(currentWalletId);
   if (!wallet || !networkSelect) return;
-
-  // Avoid overlapping refreshes
-  if (isRefreshingWallet) return;
-  isRefreshingWallet = true;
 
   const uiNet = networkSelect.value || "sepolia";
   const provider = getProviderForNetwork(uiNet);
@@ -710,7 +762,6 @@ async function refreshWalletOnChainData() {
       networkStatusPill.classList.add("status-pill-bad");
     }
     console.warn("No provider for network", uiNet);
-    isRefreshingWallet = false;
     return;
   }
 
@@ -741,7 +792,7 @@ async function refreshWalletOnChainData() {
     // ERC-20 holdings only where Alchemy extended APIs exist
     const isAlchemyNetwork = !uiNet.startsWith("iotex-") && uiNet !== "unknown";
     if (isAlchemyNetwork) {
-      const erc20Holdings = await fetchAllErc20Holdings(provider, wallet.address, uiNet);
+      const erc20Holdings = await fetchAllErc20Holdings(provider, wallet.address);
       erc20Holdings.forEach((h) => holdings.push(h));
     }
 
@@ -760,7 +811,7 @@ async function refreshWalletOnChainData() {
       networkStatusPill.className = "status-pill status-pill-good";
     }
 
-    // Optional: reverse ENS name for current wallet (mainnet/sepolia)
+    // Optional: show reverse ENS name for current wallet (mainnet/sepolia)
     if (walletEnsNameEl) {
       walletEnsNameEl.textContent = "";
       const ens = await reverseLookupEnsName(wallet.address, uiNet);
@@ -773,30 +824,6 @@ async function refreshWalletOnChainData() {
       networkStatusPill.textContent = "RPC: ERROR";
       networkStatusPill.className = "status-pill status-pill-bad";
     }
-  } finally {
-    isRefreshingWallet = false;
-  }
-}
-
-// ✅ NEW: auto-refresh balances every minute (only when a wallet is active)
-function startWalletAutoRefresh() {
-  if (walletRefreshTimer) {
-    clearInterval(walletRefreshTimer);
-    walletRefreshTimer = null;
-  }
-  // Immediate refresh, then every 60s
-  refreshWalletOnChainData();
-  walletRefreshTimer = setInterval(() => {
-    // Avoid doing work if tab is hidden (reduces weird RPC timing issues)
-    if (document.hidden) return;
-    refreshWalletOnChainData();
-  }, 60_000);
-}
-
-function stopWalletAutoRefresh() {
-  if (walletRefreshTimer) {
-    clearInterval(walletRefreshTimer);
-    walletRefreshTimer = null;
   }
 }
 
@@ -844,10 +871,6 @@ function setCurrentWallet(id, { refreshOnChain = false } = {}) {
   updateAppVisibility();
   populateSafesendSelectors();
   renderWalletSettingsUI();
-
-  // ✅ Auto refresh lifecycle
-  if (currentWalletId) startWalletAutoRefresh();
-  else stopWalletAutoRefresh();
 
   if (refreshOnChain) refreshWalletOnChainData();
 }
@@ -923,7 +946,9 @@ function updateWalletHubList() {
 
   wallets.forEach((w) => {
     const portable = hasPortableVault(w);
-    const legacyTag = portable ? "" : `<div class="hint-text">Legacy (re-import seed to make portable)</div>`;
+    const legacyTag = portable
+      ? ""
+      : `<div class="hint-text">Legacy (re-import seed to make portable)</div>`;
 
     const row = document.createElement("div");
     row.className = "wallet-gate-list-item";
@@ -1164,10 +1189,7 @@ function populateAssetsForWallet(walletId, prevAssetKey) {
   });
 
   let selectedKey;
-  if (
-    prevAssetKey &&
-    [...ssAssetSelect.options].some((o) => o.value === prevAssetKey)
-  ) {
+  if (prevAssetKey && [...ssAssetSelect.options].some((o) => o.value === prevAssetKey)) {
     selectedKey = prevAssetKey;
   } else {
     selectedKey = `${wallet.id}:0`;
@@ -1182,11 +1204,16 @@ function updateSafesendSelectedBalance(wallet, holding) {
   if (!wallet || !holding) {
     ssBalanceAmountEl.textContent = "--";
     ssBalanceUsdEl.textContent = "--";
+    if (ssAmountUnitEl) ssAmountUnitEl.textContent = "ETH";
     return;
   }
 
   ssBalanceAmountEl.textContent = `${holding.amount} ${holding.symbol}`;
   ssBalanceUsdEl.textContent = formatUsd(holding.usdValue || 0);
+
+  if (ssAmountUnitEl) {
+    ssAmountUnitEl.textContent = holding && holding.symbol ? holding.symbol : "ETH";
+  }
 }
 
 function updateSafesendBalanceForSelection() {
@@ -1240,8 +1267,7 @@ function goToSafeSend(walletId, holdingIndex) {
 
 // ===== SENDSAFE GAUGE / HIGHLIGHTS / HISTORY =====
 function classifyScore(score) {
-  if (score === null || score === undefined || Number.isNaN(score))
-    return "neutral";
+  if (score === null || score === undefined || Number.isNaN(score)) return "neutral";
   if (score >= 80) return "good";
   if (score >= 50) return "warn";
   return "bad";
@@ -1328,9 +1354,10 @@ function renderSafesendHistory() {
       main.className = "safesend-history-main";
       main.innerHTML = `
         <div class="safesend-history-address">${entry.displayRecipient || entry.address}</div>
-        ${entry.displayRecipient && entry.displayRecipient !== entry.address
-          ? `<div class="hint-text">Resolved: ${shorten(entry.address, 10, 6)}</div>`
-          : ""
+        ${
+          entry.displayRecipient && entry.displayRecipient !== entry.address
+            ? `<div class="hint-text">Resolved: ${shorten(entry.address, 10, 6)}</div>`
+            : ""
         }
         <div class="safesend-history-meta">
           Wallet: ${entry.walletLabel} · Asset: ${entry.assetSymbol}
@@ -1510,6 +1537,7 @@ function updateModalGauge(score) {
   else if (level === "bad") modalRiskGaugeDial.classList.add("bad");
 }
 
+// ===== SENDSAFE RESULT MODAL (UPDATED: gated execution) =====
 function showSafesendResultModal(score) {
   if (!safesendResultModal) return;
 
@@ -1518,74 +1546,93 @@ function showSafesendResultModal(score) {
   safesendRiskAckRow.hidden = true;
   safesendResultButtons.innerHTML = "";
 
-  if (score >= 90) {
+  const deny = score >= 90;
+  const warn = score >= 60 && score < 90;
+
+  if (deny) {
     safesendResultMessage.textContent =
-      "This transaction is being denied due to elevated risks associated with government sanctions, concerning patterns of activity or reports of fraud.";
-
-    const backBtn = document.createElement("button");
-    backBtn.className = "primary-btn";
-    backBtn.textContent = "Return to SendSafe";
-    backBtn.addEventListener("click", () => {
-      closeModal(safesendResultModal);
-    });
-
-    safesendResultButtons.appendChild(backBtn);
-  } else if (score >= 60) {
+      "DENIED: This transaction is being blocked due to elevated risk signals (sanctions, fraud patterns, or other severe indicators).";
+  } else if (warn) {
     safesendResultMessage.textContent =
-      "This transaction represents a higher than normal amount of risk. Should you choose to proceed with the transaction you assume any risks associated with the transaction. Neither RiskXLabs, SendSafe nor our affiliates will be responsible for the reclamation or recovery of funds sent to this address now or in the future.";
-
-    safesendRiskAckRow.hidden = false;
-    safesendRiskAckText.textContent =
-      "By checking the following box you agree to all of the above.";
-
-    const cancelBtn = document.createElement("button");
-    cancelBtn.className = "ghost-btn";
-    cancelBtn.textContent = "Cancel";
-    cancelBtn.addEventListener("click", () => {
-      closeModal(safesendResultModal);
-    });
-
-    const completeBtn = document.createElement("button");
-    completeBtn.className = "primary-btn";
-    completeBtn.textContent = "Complete transaction";
-    completeBtn.disabled = true;
-
-    const onChange = () => {
-      completeBtn.disabled = !safesendRiskAckCheckbox.checked;
-    };
-    safesendRiskAckCheckbox.addEventListener("change", onChange);
-
-    completeBtn.addEventListener("click", () => {
-      alert("Prototype: this is where the transaction would be submitted.");
-      closeModal(safesendResultModal);
-      safesendRiskAckCheckbox.removeEventListener("change", onChange);
-    });
-
-    safesendResultButtons.appendChild(cancelBtn);
-    safesendResultButtons.appendChild(completeBtn);
+      "WARNING: This transaction represents a higher than normal amount of risk. If you proceed, you assume all risks. Transactions are irreversible.";
   } else {
     safesendResultMessage.textContent =
-      "This transaction falls within normal risk bands according to SendSafe. You may proceed, or cancel if you have doubts.";
-
-    const cancelBtn = document.createElement("button");
-    cancelBtn.className = "ghost-btn";
-    cancelBtn.textContent = "Cancel transaction";
-    cancelBtn.addEventListener("click", () => {
-      closeModal(safesendResultModal);
-    });
-
-    const completeBtn = document.createElement("button");
-    completeBtn.className = "primary-btn";
-    completeBtn.textContent = "Complete transaction";
-    completeBtn.addEventListener("click", () => {
-      alert("Prototype: this is where the transaction would be submitted.");
-      closeModal(safesendResultModal);
-    });
-
-    safesendResultButtons.appendChild(cancelBtn);
-    safesendResultButtons.appendChild(completeBtn);
+      "ALLOWED: This transaction falls within normal risk bands according to SendSafe.";
   }
 
+  const backBtn = document.createElement("button");
+  backBtn.className = "ghost-btn";
+  backBtn.textContent = "Back";
+  backBtn.addEventListener("click", () => closeModal(safesendResultModal));
+  safesendResultButtons.appendChild(backBtn);
+
+  if (deny) {
+    const denyBtn = document.createElement("button");
+    denyBtn.className = "primary-btn";
+    denyBtn.textContent = "Denied";
+    denyBtn.disabled = true;
+    safesendResultButtons.appendChild(denyBtn);
+
+    openModal(safesendResultModal);
+    return;
+  }
+
+  const sendBtn2 = document.createElement("button");
+  sendBtn2.className = "primary-btn";
+  sendBtn2.textContent = "Preview & Send";
+  sendBtn2.disabled = false;
+
+  let warnChangeHandler = null;
+
+  if (warn) {
+    safesendRiskAckRow.hidden = false;
+    safesendRiskAckText.textContent =
+      "To proceed, you must acknowledge the warning by checking the box.";
+
+    sendBtn2.disabled = true;
+    warnChangeHandler = () => {
+      sendBtn2.disabled = !safesendRiskAckCheckbox.checked;
+    };
+    safesendRiskAckCheckbox.addEventListener("change", warnChangeHandler);
+
+    // Clean up handler when modal closes via back or X
+    backBtn.addEventListener("click", () => {
+      if (warnChangeHandler) {
+        safesendRiskAckCheckbox.removeEventListener("change", warnChangeHandler);
+        warnChangeHandler = null;
+      }
+    });
+
+    const closeX = safesendResultModal.querySelector("[data-close-modal]");
+    if (closeX) {
+      closeX.addEventListener(
+        "click",
+        () => {
+          if (warnChangeHandler) {
+            safesendRiskAckCheckbox.removeEventListener("change", warnChangeHandler);
+            warnChangeHandler = null;
+          }
+        },
+        { once: true }
+      );
+    }
+  }
+
+  sendBtn2.addEventListener("click", async () => {
+    try {
+      closeModal(safesendResultModal);
+      if (warnChangeHandler) {
+        safesendRiskAckCheckbox.removeEventListener("change", warnChangeHandler);
+        warnChangeHandler = null;
+      }
+      await executeNativeEthSendFromLastDecision();
+    } catch (e) {
+      console.error("Execute send error", e);
+      alert(e && e.message ? e.message : "Unable to execute send.");
+    }
+  });
+
+  safesendResultButtons.appendChild(sendBtn2);
   openModal(safesendResultModal);
 }
 
@@ -1608,13 +1655,153 @@ if (recipientInput) {
         const res = await resolveRecipientToAddress(v, networkValue);
         setRecipientResolutionUI(res);
       } catch (e) {
-        setRecipientResolutionUI({ type: "ens", input: v, address: null, error: "Resolve failed." });
+        setRecipientResolutionUI({
+          type: "ens",
+          input: v,
+          address: null,
+          error: "Resolve failed.",
+        });
       }
     }, 350);
   });
 }
 
-// ===== SENDSAFE BUTTON HANDLER =====
+// ===== SEND EXECUTION (Native ETH only, mainnet + sepolia) =====
+async function executeNativeEthSendFromLastDecision() {
+  if (!lastSendSafeDecision) {
+    throw new Error("No SendSafe decision found. Run SendSafe first.");
+  }
+
+  const {
+    walletId,
+    toAddress,
+    toDisplay,
+    uiNetwork,
+    score,
+    scoreCategory,
+    amountEth,
+  } = lastSendSafeDecision;
+
+  if (!isSupportedNativeSendNetwork(uiNetwork)) {
+    throw new Error(
+      "Native send is enabled only for Ethereum mainnet and Sepolia in this beta step."
+    );
+  }
+
+  if (score >= 90) {
+    throw new Error("SendSafe denied this transaction. Execution blocked.");
+  }
+
+  const wallet = getWalletById(walletId);
+  if (!wallet) throw new Error("Selected wallet is no longer available.");
+
+  // Require unlock session for portable wallets
+  if (hasPortableVault(wallet) && !sessionUnlockedWallets.has(wallet.id)) {
+    openUnlockModalForWallet(wallet);
+    throw new Error("Wallet is locked. Unlock it to sign and send.");
+  }
+
+  const provider = getProviderForNetwork(uiNetwork);
+  if (!provider) throw new Error("RPC provider unavailable for selected network.");
+
+  if (!Number.isFinite(amountEth) || amountEth <= 0) {
+    throw new Error("Enter a valid send amount.");
+  }
+
+  let mnemonic = null;
+  if (hasPortableVault(wallet)) {
+    // Execution-time password entry (not persisted)
+    const pw = prompt(`Enter password to sign this transaction for "${wallet.label}":`);
+    if (!pw) throw new Error("Password required to sign.");
+    mnemonic = await decryptMnemonicFromVault(wallet.vault, pw);
+  } else {
+    throw new Error(
+      "Legacy wallet cannot sign transactions. Convert it by re-importing the seed to enable signing."
+    );
+  }
+
+  const signer = ethers.Wallet.fromMnemonic(
+    mnemonic.trim(),
+    (wallet.hd && wallet.hd.path) || DEFAULT_EVM_DERIVATION_PATH
+  ).connect(provider);
+
+  const signerAddr = ethers.utils.getAddress(signer.address);
+  const walletAddr = ethers.utils.getAddress(wallet.address);
+  if (signerAddr !== walletAddr) {
+    mnemonic = null;
+    throw new Error(
+      "Safety check failed: decrypted seed does not match the selected wallet address."
+    );
+  }
+
+  const valueWei = ethers.utils.parseEther(String(amountEth));
+  const txReq = {
+    to: ethers.utils.getAddress(toAddress),
+    value: valueWei,
+  };
+
+  const balanceWei = await provider.getBalance(walletAddr);
+  const { gasLimit, estFeeWei, estTotalWei } = await estimateNativeTxCost(provider, {
+    from: walletAddr,
+    to: txReq.to,
+    valueWei,
+  });
+
+  const balEth = Number(ethers.utils.formatEther(balanceWei));
+  const feeEth = estFeeWei ? Number(ethers.utils.formatEther(estFeeWei)) : null;
+  const totalEth = estTotalWei ? Number(ethers.utils.formatEther(estTotalWei)) : null;
+
+  if (estTotalWei && balanceWei.lt(estTotalWei)) {
+    mnemonic = null;
+    throw new Error(
+      `Insufficient funds. Balance: ${formatEth(balEth)}. Estimated total (amount + gas): ${formatEth(totalEth)}.`
+    );
+  }
+
+  const previewLines = [
+    `Network: ${uiNetwork}`,
+    `From: ${walletAddr}`,
+    `To: ${txReq.to}${toDisplay && toDisplay !== txReq.to ? ` (input: ${toDisplay})` : ""}`,
+    `Amount: ${formatEth(amountEth)}`,
+    `Estimated gas limit: ${gasLimit.toString()}`,
+    `Estimated fee: ${feeEth === null ? "--" : formatEth(feeEth)}`,
+    `Estimated total: ${totalEth === null ? "--" : formatEth(totalEth)}`,
+    `SendSafe score: ${score}/100 (${scoreCategory})`,
+  ].join("\n");
+
+  const ok = confirm(
+    `Review & confirm transaction:\n\n${previewLines}\n\nProceed to send?`
+  );
+  if (!ok) {
+    mnemonic = null;
+    return;
+  }
+
+  setRunButtonLabel("Sending…");
+  if (runSafeSendBtn) runSafeSendBtn.disabled = true;
+
+  let tx;
+  try {
+    tx = await signer.sendTransaction(txReq);
+  } finally {
+    mnemonic = null; // discard
+    if (runSafeSendBtn) runSafeSendBtn.disabled = false;
+    setRunButtonLabel("Sendsafe");
+  }
+
+  const explorerBase = getExplorerTxBase(uiNetwork);
+  const explorerUrl = explorerBase ? `${explorerBase}${tx.hash}` : null;
+
+  alert(
+    `Transaction submitted!\n\nHash: ${tx.hash}\n${
+      explorerUrl ? `\nExplorer: ${explorerUrl}` : ""
+    }\n\nNote: it may take a moment to confirm.`
+  );
+
+  await refreshWalletOnChainData().catch(() => {});
+}
+
+// ===== SENDSAFE BUTTON HANDLER (UPDATED: stores decision for execution) =====
 if (runSafeSendBtn) {
   runSafeSendBtn.addEventListener("click", async () => {
     const rawRecipient = (recipientInput && recipientInput.value.trim()) || "";
@@ -1639,13 +1826,15 @@ if (runSafeSendBtn) {
       }
     }
 
+    const amountEth = getSendAmountEthFromUI();
+
     runSafeSendBtn.disabled = true;
-    const labelSpan = runSafeSendBtn.querySelector(".safesend-tv");
-    if (labelSpan) labelSpan.textContent = "Scanning…";
+    setRunButtonLabel("Scanning…");
 
     try {
       const networkValue = networkSelect ? networkSelect.value : "ethereum-mainnet";
 
+      // Resolve ENS -> address OR validate 0x
       let resolved = null;
       try {
         resolved = await resolveRecipientToAddress(rawRecipient, networkValue);
@@ -1657,7 +1846,11 @@ if (runSafeSendBtn) {
 
       if (!resolved || !resolved.address) {
         if (resolved && resolved.type === "ens") {
-          alert(`That ENS name didn't resolve to an address.${resolved.error ? " (" + resolved.error + ")" : ""}`);
+          alert(
+            `That ENS name didn't resolve to an address.${
+              resolved.error ? " (" + resolved.error + ")" : ""
+            }`
+          );
         } else {
           alert("Enter a valid 0x address or an ENS name like riskxlabs.eth");
         }
@@ -1666,6 +1859,7 @@ if (runSafeSendBtn) {
 
       const toAddressResolved = resolved.address;
 
+      // Load tx preview (uses resolved 0x)
       loadRecentTransactions(wallet ? wallet.address : null, toAddressResolved, networkValue);
 
       const payload = {
@@ -1693,9 +1887,7 @@ if (runSafeSendBtn) {
       if (!res.ok) {
         console.error("Risk engine 4xx/5xx:", res.status, bodyText);
         const msg =
-          engineResult && engineResult.error
-            ? engineResult.error
-            : `Risk engine error ${res.status}`;
+          engineResult && engineResult.error ? engineResult.error : `Risk engine error ${res.status}`;
         alert(`SendSafe risk engine rejected the request: ${msg}`);
         updateRiskGauge(null);
         updateRiskHighlightsFromEngine(null);
@@ -1731,6 +1923,44 @@ if (runSafeSendBtn) {
       saveSafesendHistory();
       renderSafesendHistory();
 
+      // ===== Store last decision for gated execution (Native ETH only) =====
+      const networkValue2 = networkSelect ? networkSelect.value : "ethereum-mainnet";
+
+      let selectedHolding = null;
+      if (wallet && assetKey && assetKey.includes(":")) {
+        const idx2 = Number(assetKey.split(":")[1]);
+        selectedHolding = wallet.holdings && wallet.holdings[idx2];
+      }
+
+      if (!isNativeEthHolding(selectedHolding)) {
+        alert("Beta step: Only native ETH (ETH / ETH-Sepolia) transfers are enabled right now.");
+        return;
+      }
+
+      if (!isSupportedNativeSendNetwork(networkValue2)) {
+        alert("Beta step: Native send is enabled only on Ethereum mainnet and Sepolia.");
+        return;
+      }
+
+      if (amountEth === null) {
+        alert("Enter the amount of ETH you want to send.");
+        return;
+      }
+
+      lastSendSafeDecision = {
+        walletId: wallet ? wallet.id : null,
+        walletLabel: wallet ? wallet.label : "Unknown wallet",
+        fromAddress: wallet ? wallet.address : null,
+        toAddress: toAddressResolved,
+        toDisplay: resolved && resolved.type === "ens" ? resolved.input : toAddressResolved,
+        uiNetwork: networkValue2,
+        score,
+        scoreCategory: classifyScore(score),
+        amountEth,
+        holdingSymbol: selectedHolding ? selectedHolding.symbol : "ETH",
+        createdAt: Date.now(),
+      };
+
       showSafesendResultModal(score);
     } catch (err) {
       console.error("SendSafe error:", err);
@@ -1739,8 +1969,7 @@ if (runSafeSendBtn) {
       updateRiskHighlightsFromEngine(null);
     } finally {
       runSafeSendBtn.disabled = false;
-      const labelSpan2 = runSafeSendBtn.querySelector(".safesend-tv");
-      if (labelSpan2) labelSpan2.textContent = "Sendsafe";
+      setRunButtonLabel("Sendsafe");
     }
   });
 }
@@ -1813,6 +2042,7 @@ if (cwConfirmBtn) {
       return;
     }
 
+    // Encrypt mnemonic to vault
     let vault;
     try {
       vault = await encryptMnemonicToVault(phrase, password);
@@ -1822,6 +2052,7 @@ if (cwConfirmBtn) {
       return;
     }
 
+    // If wallet already exists by address, just update it to portable
     let existing = wallets.find((w) => w.address.toLowerCase() === address.toLowerCase());
     if (!existing) {
       const id = `wallet_${Date.now()}`;
@@ -1970,7 +2201,7 @@ if (iwImportBtn) {
   });
 }
 
-// ===== UNLOCK =====
+// ===== UNLOCK (portable: decrypt vault, legacy: optional fallback) =====
 function openUnlockModalForWallet(wallet) {
   pendingUnlockWalletId = wallet.id;
   if (uwLabelEl) uwLabelEl.textContent = wallet.label;
@@ -2030,6 +2261,15 @@ if (uwConfirmBtn) {
         return;
       }
     } else {
+      if (wallet.password) {
+        if (entered !== wallet.password) {
+          if (uwPasswordErrorEl) {
+            uwPasswordErrorEl.textContent = "Incorrect password.";
+            uwPasswordErrorEl.removeAttribute("hidden");
+          }
+          return;
+        }
+      }
       sessionUnlockedWallets.add(wallet.id);
     }
 
@@ -2157,7 +2397,11 @@ if (walletSettingsList) {
     openImportModal();
     if (iwLabelEl) iwLabelEl.value = w.label || "Imported wallet";
     if (iwErrorEl) {
-      iwErrorEl.textContent = `Convert wallet: paste the seed phrase for ${shorten(w.address, 8, 6)} to enable portability.`;
+      iwErrorEl.textContent = `Convert wallet: paste the seed phrase for ${shorten(
+        w.address,
+        8,
+        6
+      )} to enable portability.`;
       iwErrorEl.removeAttribute("hidden");
     }
   });
@@ -2210,7 +2454,7 @@ function renderTickerSettingsUI() {
 function buildVaultExportPayload() {
   return {
     schema: "xwallet-vault",
-    v: 2, // ✅ bumped version because we now include tokenCatalog
+    v: 1,
     exportedAt: new Date().toISOString(),
     wallets: wallets.map((w) => ({
       id: w.id,
@@ -2219,13 +2463,13 @@ function buildVaultExportPayload() {
       hd: w.hd || { path: DEFAULT_EVM_DERIVATION_PATH, accountIndex: 0 },
       vault: w.vault || null,
     })),
-    // ✅ NEW: portable token discovery across devices
-    tokenCatalog: tokenCatalog || {},
   };
 }
 
 function downloadJson(filename, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -2261,21 +2505,18 @@ if (importVaultBtn && importVaultFile) {
         return;
       }
 
-      // ✅ Merge tokenCatalog from export (if present)
-      if (data.tokenCatalog && typeof data.tokenCatalog === "object") {
-        tokenCatalog = { ...(tokenCatalog || {}), ...(data.tokenCatalog || {}) };
-        saveTokenCatalog();
-      }
-
       const incoming = data.wallets;
 
       incoming.forEach((iw) => {
         if (!iw || !iw.address) return;
 
-        const existing = wallets.find((w) => w.address.toLowerCase() === String(iw.address).toLowerCase());
+        const existing = wallets.find(
+          (w) => w.address.toLowerCase() === String(iw.address).toLowerCase()
+        );
         if (existing) {
           existing.label = iw.label || existing.label;
-          existing.hd = iw.hd || existing.hd || { path: DEFAULT_EVM_DERIVATION_PATH, accountIndex: 0 };
+          existing.hd =
+            iw.hd || existing.hd || { path: DEFAULT_EVM_DERIVATION_PATH, accountIndex: 0 };
           if (iw.vault) existing.vault = iw.vault;
           delete existing.password;
         } else {
@@ -2355,8 +2596,7 @@ function renderTicker(data) {
   strip.className = "ticker-strip-inner";
 
   data.forEach((item) => {
-    const changeClass =
-      item.change > 0 ? "positive" : item.change < 0 ? "negative" : "";
+    const changeClass = item.change > 0 ? "positive" : item.change < 0 ? "negative" : "";
 
     const cell = document.createElement("div");
     cell.className = "ticker-item";
@@ -2389,7 +2629,6 @@ function startTickerAutoRefresh() {
 }
 
 // ===== INIT =====
-loadTokenCatalog();          // ✅ NEW
 loadWallets();
 loadSafesendHistory();
 tickerSymbols = loadTickerSymbols();
@@ -2440,12 +2679,3 @@ renderTickerSettingsUI();
 startTickerAutoRefresh();
 setView("dashboard");
 updateAppVisibility();
-
-// ✅ If a wallet is already selected from session, start balance auto-refresh
-if (currentWalletId) startWalletAutoRefresh();
-
-// ✅ Stop refresh loops cleanly when the page is unloading
-window.addEventListener("beforeunload", () => {
-  stopWalletAutoRefresh();
-  if (tickerRefreshTimer) clearInterval(tickerRefreshTimer);
-});
